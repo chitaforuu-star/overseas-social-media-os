@@ -244,9 +244,9 @@ export function HomePage() {
         </div>
       }
     >
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="space-y-4">
         <AppCard className="overflow-hidden border-[#D7E7F7] bg-[#F8FBFF] p-0 shadow-[0_28px_70px_rgba(15,23,42,0.06)]">
-          <div className="grid gap-0 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-0">
             <div className="relative min-h-[520px] overflow-hidden bg-[linear-gradient(180deg,#F6FBFF_0%,#EEF7FD_100%)] p-5 sm:p-6">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(125,211,252,0.55),transparent_22%),radial-gradient(circle_at_82%_16%,rgba(167,243,208,0.34),transparent_18%),radial-gradient(circle_at_42%_86%,rgba(255,255,255,0.92),transparent_28%)]" />
               <div className="relative flex items-start justify-between gap-3">
