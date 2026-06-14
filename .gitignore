@@ -45,3 +45,5 @@ vercel-share-bundle/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel

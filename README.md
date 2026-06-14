@@ -49,7 +49,7 @@ After deployment, Vercel will provide a production URL such as:
 https://your-project-name.vercel.app
 ```
 
-This is the final link you should share with friends/interviewers.
+This is the final link you should share with collaborators and reviewers.
 
 ## Routes
 

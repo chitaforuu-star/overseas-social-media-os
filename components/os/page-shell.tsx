@@ -1,126 +1,86 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { Globe2 } from "lucide-react";
-import { copy } from "@/lib/translations";
 import { useLanguage } from "@/components/os/language-context";
-
-function NavItem({ href, label }: { href: string; label: string }) {
-  const pathname = usePathname();
-  const active = pathname === href || pathname.startsWith(`${href}/`);
-  return (
-    <Link
-      href={href}
-      className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
-        active
-          ? "bg-[#14253a] text-white"
-          : "bg-white text-[#203047] hover:bg-[#eef2f6]"
-      }`}
-    >
-      {label}
-    </Link>
-  );
-}
-
-export function BilingualBlock({
-  titleZh,
-  titleEn,
-  descZh,
-  descEn,
-}: {
-  titleZh: string;
-  titleEn: string;
-  descZh: string;
-  descEn: string;
-}) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#5d6c7f]">
-        {titleZh}
-      </p>
-      <p className="text-base font-bold text-[#14253a]">{titleEn}</p>
-      <p className="text-sm text-[#30445f]">{descZh}</p>
-      <p className="text-sm text-[#4a5d76]">{descEn}</p>
-    </div>
-  );
-}
+import { AppButton } from "@/components/os/ui/app-button";
+import { PageHeader } from "@/components/os/ui/page-header";
+import { SidebarNav } from "@/components/os/ui/sidebar-nav";
+import { copy } from "@/lib/translations";
+import type { BilingualText } from "@/lib/translations";
 
 export function PageShell({
   children,
   title,
   description,
+  headerAction,
 }: {
-  children: React.ReactNode;
-  title: { zh: string; en: string };
-  description: { zh: string; en: string };
+  children: ReactNode;
+  title: BilingualText | string;
+  description: BilingualText | string;
+  headerAction?: ReactNode;
 }) {
-  const { locale, setLocale, labels, dual } = useLanguage();
-  const heading = dual(title);
-  const subHeading = dual(description);
+  const { locale, setLocale, pick } = useLanguage();
+  const pageTitle = typeof title === "string" ? title : pick(title);
+  const pageDescription = typeof description === "string" ? description : pick(description);
 
   return (
-    <main className="min-h-screen bg-[#f2f5f8] text-[#14253a]">
-      <header className="border-b border-[#d4dce5] bg-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#5d6c7f]">
-                {copy.appName.en}
-              </p>
-              <h1 className="text-xl font-black sm:text-2xl">{heading.primary}</h1>
-              <p className="text-sm text-[#4b5d74]">{heading.secondary}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-md border border-[#d4dce5] bg-[#f7fafc] px-3 py-2 text-sm font-semibold text-[#2f4057]">
-                <Globe2 className="h-4 w-4" />
-                {copy.languageLabel.zh} / {copy.languageLabel.en}
-              </span>
-              <button
-                type="button"
-                onClick={() => setLocale("zh")}
-                className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                  locale === "zh"
-                    ? "bg-[#14253a] text-white"
-                    : "bg-white text-[#22344b] hover:bg-[#eef2f6]"
-                }`}
-              >
-                {labels.zh}
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocale("en")}
-                className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                  locale === "en"
-                    ? "bg-[#14253a] text-white"
-                    : "bg-white text-[#22344b] hover:bg-[#eef2f6]"
-                }`}
-              >
-                {labels.en}
-              </button>
-            </div>
+    <main className="min-h-screen bg-[#F7F7F8] text-[#111827]">
+      <header className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 backdrop-blur">
+        <div className="os-content-width flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
+              {pick(copy.appName)}
+            </p>
+            <p className="truncate text-sm text-[#6B7280]">{pick(copy.appIntro)}</p>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <NavItem href="/" label="Home" />
-            <NavItem href="/creator-crm/finder" label="Creator CRM" />
-            <NavItem href="/content-hub" label="Content Hub" />
-            <NavItem href="/ecommerce-tracking" label="E-commerce Tracking" />
+          <div className="flex items-center gap-2">
+            <span className="hidden items-center gap-2 text-sm text-[#6B7280] sm:inline-flex">
+              <Globe2 className="h-4 w-4" />
+              {pick(copy.common.language)}
+            </span>
+            <AppButton
+              variant={locale === "zh" ? "primary" : "secondary"}
+              onClick={() => setLocale("zh")}
+            >
+              中文
+            </AppButton>
+            <AppButton
+              variant={locale === "en" ? "primary" : "secondary"}
+              onClick={() => setLocale("en")}
+            >
+              EN
+            </AppButton>
           </div>
         </div>
       </header>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 rounded-lg border border-[#d4dce5] bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#5d6c7f]">
-            {copy.sectionLabel.zh} / {copy.sectionLabel.en}
-          </p>
-          <h2 className="mt-2 text-xl font-black text-[#14253a]">
-            {subHeading.primary}
-          </h2>
-          <p className="mt-1 text-sm text-[#4b5d74]">{subHeading.secondary}</p>
+      <section className="os-content-width px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[248px_minmax(0,1fr)]">
+          <aside className="hidden lg:block">
+            <div className="os-card p-3">
+              <SidebarNav />
+            </div>
+          </aside>
+
+          <div className="space-y-5">
+            <div className="block lg:hidden">
+              <div className="os-card p-3">
+                <SidebarNav />
+              </div>
+            </div>
+
+            <div className="os-card p-5">
+              <PageHeader
+                title={pageTitle}
+                description={pageDescription}
+                rightSlot={headerAction}
+              />
+            </div>
+
+            {children}
+          </div>
         </div>
-        {children}
       </section>
     </main>
   );

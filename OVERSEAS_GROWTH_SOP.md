@@ -38,7 +38,6 @@
 
 - `marketingskills`：SEO audit、on-page SEO、流量下滑诊断。
 - `shopify-product-serp-seo-optimizer`：产品页 SERP 标题、描述、alt text、元字段优化。
-- `interview-prep-pm`：岗位匹配、面试表达和项目经历梳理。
 
 ## Hermes Agent 接入建议
 

@@ -1,19 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { EditableTable } from "@/components/os/editable-table";
+import { useMemo, useState } from "react";
+import { ArrowRight, Download, Plus } from "lucide-react";
+import { EditableTable, type Column } from "@/components/os/editable-table";
 import { useLanguage } from "@/components/os/language-context";
 import { useOS } from "@/components/os/os-context";
 import { PageShell } from "@/components/os/page-shell";
+import { AppBadge } from "@/components/os/ui/app-badge";
+import { AppButton } from "@/components/os/ui/app-button";
+import { AppCard } from "@/components/os/ui/app-card";
+import { AppInput } from "@/components/os/ui/app-input";
+import { AppSelect } from "@/components/os/ui/app-select";
+import { SectionHeader } from "@/components/os/ui/section-header";
 import {
-  collaborationColumns,
-  contentTrackerColumns,
-  creatorAuditColumns,
-  creatorFinderColumns,
-  outreachColumns,
-  performanceColumns,
-  sampleColumns,
+  getCollaborationColumns,
+  getContentTrackerColumns,
+  getCreatorAuditColumns,
+  getOutreachColumns,
+  getPerformanceColumns,
+  getSampleColumns,
 } from "@/lib/os-ui-copy";
 import { copy, stageOrder } from "@/lib/translations";
 import type {
@@ -22,6 +28,7 @@ import type {
   CreatorAuditRecord,
   CreatorRecord,
   CreatorStageKey,
+  CreatorStatus,
   OutreachRecord,
   PerformanceRecord,
   SampleRecord,
@@ -38,22 +45,26 @@ const nextStage: Record<CreatorStageKey, CreatorStageKey | null> = {
 };
 
 function StageNav({ current }: { current: CreatorStageKey }) {
+  const { pick } = useLanguage();
   return (
-    <div className="mb-4 flex flex-wrap gap-2">
-      {stageOrder.map((stage) => (
-        <Link
-          key={stage}
-          href={`/creator-crm/${stage}`}
-          className={`rounded-md px-3 py-2 text-sm font-semibold ${
-            stage === current
-              ? "bg-[#14253a] text-white"
-              : "bg-white text-[#2f4057] hover:bg-[#edf2f7]"
-          }`}
-        >
-          {copy.stageTitles[stage].zh} / {copy.stageTitles[stage].en}
-        </Link>
-      ))}
-    </div>
+    <AppCard className="p-3">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        {stageOrder.map((stage) => (
+          <Link
+            key={stage}
+            href={`/creator-crm/${stage}`}
+            className={`rounded-xl border px-3 py-2 text-sm transition ${
+              stage === current
+                ? "border-[#F9D5E5] bg-[#FFF1F6] text-[#BE185D]"
+                : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#FAFAFA]"
+            }`}
+          >
+            <p className="font-semibold">{pick(copy.creatorCrm.stageTitle[stage])}</p>
+            <p className="os-helper-text mt-1">{pick(copy.creatorCrm.stageDescription[stage])}</p>
+          </Link>
+        ))}
+      </div>
+    </AppCard>
   );
 }
 
@@ -66,211 +77,347 @@ function patchRow<Row extends { id: string }>(
   update(id, { [key]: value } as Partial<Row>);
 }
 
-export function CreatorCrmPage({ stage }: { stage: CreatorStageKey }) {
-  const { dual } = useLanguage();
+function FinderBoard() {
+  const { pick } = useLanguage();
   const os = useOS();
-  const stageTitle = dual(copy.stageTitles[stage]);
-  const stageDescription = dual(copy.stageDescriptions[stage]);
+
+  const [query, setQuery] = useState("");
+  const [platformFilter, setPlatformFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const allPlatforms = useMemo(
+    () => Array.from(new Set(os.state.creators.map((item) => item.platform).filter(Boolean))),
+    [os.state.creators],
+  );
+
+  const filteredRows = useMemo(() => {
+    return os.state.creators.filter((row) => {
+      const keyword = query.trim().toLowerCase();
+      const matchKeyword =
+        keyword.length === 0 ||
+        [row.creatorName, row.country, row.niche, row.platform, row.keyword]
+          .join(" ")
+          .toLowerCase()
+          .includes(keyword);
+      const matchPlatform = platformFilter === "all" || row.platform === platformFilter;
+      const matchStatus = statusFilter === "all" || row.status === statusFilter;
+      return matchKeyword && matchPlatform && matchStatus;
+    });
+  }, [os.state.creators, query, platformFilter, statusFilter]);
+
+  const columns: Column<CreatorRecord>[] = [
+    {
+      key: "creatorName",
+      label: pick(copy.creatorCrm.table.creator),
+      render: (row) => (
+        <div>
+          <p className="font-semibold text-[#111827]">{row.creatorName || "-"}</p>
+          <p className="os-helper-text">{row.profileLink || "-"}</p>
+        </div>
+      ),
+    },
+    { key: "platform", label: pick(copy.creatorCrm.table.platform) },
+    { key: "country", label: pick(copy.creatorCrm.table.country) },
+    { key: "niche", label: pick(copy.creatorCrm.table.niche) },
+    { key: "followers", label: pick(copy.creatorCrm.table.followers) },
+    {
+      key: "status",
+      label: pick(copy.creatorCrm.table.status),
+      render: (row) => <AppBadge status={row.status} />,
+    },
+    { key: "rate", label: pick(copy.creatorCrm.table.rate) },
+    { key: "nextStep", label: pick(copy.creatorCrm.table.nextStep) },
+  ];
+
+  const statusOptions: CreatorStatus[] = [
+    "new",
+    "contacted",
+    "replied",
+    "sample_sent",
+    "posted",
+    "reviewed",
+  ];
 
   return (
-    <PageShell title={copy.creatorCrmTitle} description={copy.creatorCrmDescription}>
-      <StageNav current={stage} />
-      <div className="mb-4 rounded-lg border border-[#d4dce5] bg-white p-4">
-        <h3 className="text-lg font-black text-[#14253a]">{stageTitle.primary}</h3>
-        <p className="text-sm text-[#4b5d74]">{stageTitle.secondary}</p>
-        <p className="mt-2 text-sm text-[#334a66]">{stageDescription.primary}</p>
-        <p className="text-sm text-[#4b5d74]">{stageDescription.secondary}</p>
+    <AppCard className="p-5">
+      <SectionHeader
+        title={pick(copy.creatorCrm.stageTitle.finder)}
+        description={pick(copy.creatorCrm.stageDescription.finder)}
+        action={
+          <AppButton variant="primary" iconLeft={<Plus className="h-4 w-4" />} onClick={() => os.addCreator()}>
+            {pick(copy.actions.addCreator)}
+          </AppButton>
+        }
+      />
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_200px_auto]">
+        <AppInput
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={pick(copy.creatorCrm.toolbar.searchPlaceholder)}
+        />
+        <AppSelect
+          value={platformFilter}
+          onChange={(event) => setPlatformFilter(event.target.value)}
+        >
+          <option value="all">{pick(copy.common.all)}</option>
+          {allPlatforms.map((platform) => (
+            <option key={platform} value={platform}>
+              {platform}
+            </option>
+          ))}
+        </AppSelect>
+        <AppSelect value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <option value="all">{pick(copy.common.all)}</option>
+          {statusOptions.map((status) => (
+            <option key={status} value={status}>
+              {pick(copy.status[status])}
+            </option>
+          ))}
+        </AppSelect>
+        <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+          {pick(copy.actions.export)}
+        </AppButton>
       </div>
 
-      {stage === "finder" ? (
-        <section className="space-y-4">
-          <div className="rounded-lg border border-[#d4dce5] bg-white p-4">
-            <p className="text-sm font-semibold text-[#30445f]">
-              {copy.addRowButton.zh} / {copy.addRowButton.en}
-            </p>
-            <button
-              type="button"
-              onClick={os.addCreator}
-              className="mt-2 rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-            >
-              + {copy.addRowButton.zh}
-            </button>
-          </div>
-
-          <EditableTable
-            rows={os.state.creators}
-            columns={creatorFinderColumns}
-            onChange={(id, key, value) =>
-              patchRow<CreatorRecord>(os.updateCreator, id, key, value)
-            }
-          />
-
-          <div className="rounded-lg border border-[#d4dce5] bg-white p-4">
-            <h4 className="text-sm font-black text-[#203047]">
-              Creator Flow Actions / 达人流转动作
-            </h4>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {os.state.creators.map((creator) => (
-                <div
-                  key={creator.id}
-                  className="rounded-md border border-[#dde5ee] bg-[#f9fbfd] p-3"
-                >
-                  <p className="text-sm font-semibold text-[#22344b]">
-                    {creator.creatorName || "Unnamed Creator"}
-                  </p>
-                  <p className="text-xs text-[#607188]">
-                    {creator.platform} · {creator.country} · {creator.niche}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {stageOrder
-                      .filter((item) => item !== "finder")
-                      .map((target) => (
-                        <button
-                          key={target}
-                          type="button"
-                          onClick={() => os.pushCreatorToStage(creator.id, target)}
-                          className="rounded-md border border-[#ccd7e3] bg-white px-2 py-1 text-xs font-semibold text-[#2b405b] hover:bg-[#eef2f6]"
-                        >
-                          {copy.stageTitles[target].en}
-                        </button>
-                      ))}
-                  </div>
-                </div>
+      <div className="mt-4 os-table-wrap">
+        <table className="os-table">
+          <thead>
+            <tr>
+              {columns.map((column) => (
+                <th key={String(column.key)}>{column.label}</th>
               ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRows.map((row) => (
+              <tr key={row.id}>
+                {columns.map((column) => {
+                  const value = String(row[column.key] ?? "");
+                  if (column.render) {
+                    return <td key={String(column.key)}>{column.render(row, value)}</td>;
+                  }
+                  if (column.key === "status") {
+                    return (
+                      <td key={String(column.key)}>
+                        <AppBadge status={row.status} />
+                      </td>
+                    );
+                  }
+                  return (
+                    <td key={String(column.key)}>
+                      <AppInput
+                        value={value}
+                        onChange={(event) =>
+                          patchRow<CreatorRecord>(
+                            os.updateCreator,
+                            row.id,
+                            column.key,
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {os.state.creators.map((creator) => (
+          <div key={creator.id} className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold">{creator.creatorName || "-"}</p>
+              <AppBadge status={creator.status} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {stageOrder
+                .filter((stage) => stage !== "finder")
+                .map((stage) => (
+                  <AppButton
+                    key={stage}
+                    variant="text"
+                    onClick={() => os.pushCreatorToStage(creator.id, stage)}
+                  >
+                    {pick(copy.creatorCrm.stageTitle[stage])}
+                  </AppButton>
+                ))}
             </div>
           </div>
-        </section>
-      ) : null}
+        ))}
+      </div>
+    </AppCard>
+  );
+}
+
+export function CreatorCrmPage({ stage }: { stage: CreatorStageKey }) {
+  const { locale, pick } = useLanguage();
+  const os = useOS();
+
+  return (
+    <PageShell
+      title={copy.creatorCrm.stageTitle[stage]}
+      description={copy.creatorCrm.stageDescription[stage]}
+      headerAction={
+        stage === "finder" ? (
+          <AppButton
+            variant="primary"
+            iconLeft={<Plus className="h-4 w-4" />}
+            onClick={() => os.addCreator()}
+          >
+            {pick(copy.actions.addCreator)}
+          </AppButton>
+        ) : undefined
+      }
+    >
+      <StageNav current={stage} />
+
+      {stage === "finder" ? <FinderBoard /> : null}
 
       {stage === "auditor" ? (
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={os.addAudit}
-            className="rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            + {copy.addRowButton.zh}
-          </button>
+        <AppCard className="p-5">
           <EditableTable
             rows={os.state.audits}
-            columns={creatorAuditColumns}
+            columns={getCreatorAuditColumns(locale)}
             onChange={(id, key, value) =>
               patchRow<CreatorAuditRecord>(os.updateAudit, id, key, value)
             }
+            searchPlaceholder={pick(copy.common.search)}
+            primaryAction={
+              <AppButton variant="primary" onClick={() => os.addAudit()}>
+                {pick(copy.actions.addRow)}
+              </AppButton>
+            }
+            secondaryActions={
+              <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+                {pick(copy.actions.export)}
+              </AppButton>
+            }
           />
-        </section>
+        </AppCard>
       ) : null}
 
       {stage === "outreach" ? (
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={os.addOutreach}
-            className="rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            + {copy.addRowButton.zh}
-          </button>
+        <AppCard className="p-5">
           <EditableTable
             rows={os.state.outreach}
-            columns={outreachColumns}
+            columns={getOutreachColumns(locale)}
             onChange={(id, key, value) =>
               patchRow<OutreachRecord>(os.updateOutreach, id, key, value)
             }
+            primaryAction={
+              <AppButton variant="primary" onClick={() => os.addOutreach()}>
+                {pick(copy.actions.addRow)}
+              </AppButton>
+            }
+            secondaryActions={
+              <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+                {pick(copy.actions.export)}
+              </AppButton>
+            }
           />
-        </section>
+        </AppCard>
       ) : null}
 
       {stage === "collaboration" ? (
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={os.addCollaboration}
-            className="rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            + {copy.addRowButton.zh}
-          </button>
+        <AppCard className="p-5">
           <EditableTable
             rows={os.state.collaborations}
-            columns={collaborationColumns}
+            columns={getCollaborationColumns(locale)}
             onChange={(id, key, value) =>
-              patchRow<CollaborationRecord>(
-                os.updateCollaboration,
-                id,
-                key,
-                value,
-              )
+              patchRow<CollaborationRecord>(os.updateCollaboration, id, key, value)
+            }
+            primaryAction={
+              <AppButton variant="primary" onClick={() => os.addCollaboration()}>
+                {pick(copy.actions.create)}
+              </AppButton>
+            }
+            secondaryActions={
+              <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+                {pick(copy.actions.export)}
+              </AppButton>
             }
           />
-        </section>
+        </AppCard>
       ) : null}
 
       {stage === "sample" ? (
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={os.addSample}
-            className="rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            + {copy.addRowButton.zh}
-          </button>
+        <AppCard className="p-5">
           <EditableTable
             rows={os.state.samples}
-            columns={sampleColumns}
+            columns={getSampleColumns(locale)}
             onChange={(id, key, value) =>
               patchRow<SampleRecord>(os.updateSample, id, key, value)
             }
+            primaryAction={
+              <AppButton variant="primary" onClick={() => os.addSample()}>
+                {pick(copy.actions.addRow)}
+              </AppButton>
+            }
+            secondaryActions={
+              <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+                {pick(copy.actions.export)}
+              </AppButton>
+            }
           />
-        </section>
+        </AppCard>
       ) : null}
 
       {stage === "content" ? (
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={os.addContentTracking}
-            className="rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            + {copy.addRowButton.zh}
-          </button>
+        <AppCard className="p-5">
           <EditableTable
             rows={os.state.contentTracking}
-            columns={contentTrackerColumns}
+            columns={getContentTrackerColumns(locale)}
             onChange={(id, key, value) =>
               patchRow<ContentRecord>(os.updateContentTracking, id, key, value)
             }
+            primaryAction={
+              <AppButton variant="primary" onClick={() => os.addContentTracking()}>
+                {pick(copy.actions.addRow)}
+              </AppButton>
+            }
+            secondaryActions={
+              <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+                {pick(copy.actions.export)}
+              </AppButton>
+            }
           />
-        </section>
+        </AppCard>
       ) : null}
 
       {stage === "performance" ? (
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={os.addPerformance}
-            className="rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            + {copy.addRowButton.zh}
-          </button>
+        <AppCard className="p-5">
           <EditableTable
             rows={os.state.performance}
-            columns={performanceColumns}
+            columns={getPerformanceColumns(locale)}
             onChange={(id, key, value) =>
               patchRow<PerformanceRecord>(os.updatePerformance, id, key, value)
             }
+            primaryAction={
+              <AppButton variant="primary" onClick={() => os.addPerformance()}>
+                {pick(copy.actions.addRow)}
+              </AppButton>
+            }
+            secondaryActions={
+              <AppButton variant="secondary" iconLeft={<Download className="h-4 w-4" />}>
+                {pick(copy.actions.export)}
+              </AppButton>
+            }
           />
-        </section>
+        </AppCard>
       ) : null}
 
       {nextStage[stage] ? (
-        <div className="mt-4 rounded-lg border border-[#d4dce5] bg-white p-4">
-          <Link
-            href={`/creator-crm/${nextStage[stage]}`}
-            className="inline-flex items-center gap-2 rounded-md bg-[#14253a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e3858]"
-          >
-            {copy.flowButton.zh}
-            <ArrowRight className="h-4 w-4" />
+        <AppCard className="p-4">
+          <Link href={`/creator-crm/${nextStage[stage]}`}>
+            <AppButton variant="primary" iconRight={<ArrowRight className="h-4 w-4" />}>
+              {pick(copy.actions.moveNext)}
+            </AppButton>
           </Link>
-        </div>
+        </AppCard>
       ) : null}
     </PageShell>
   );

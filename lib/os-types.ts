@@ -9,22 +9,72 @@ export type CreatorStageKey =
   | "content"
   | "performance";
 
+export type CreatorStatus =
+  | "new"
+  | "to_audit"
+  | "approved"
+  | "contacted"
+  | "replied"
+  | "sample_sent"
+  | "content_scheduled"
+  | "posted"
+  | "reviewed";
+
+export type CollaborationType = "Gifted" | "Paid" | "Affiliate" | "Seeding";
+
+export type CampaignStatus = "Planned" | "Active" | "Paused" | "Completed";
+
+export type DraftSource =
+  | "manual"
+  | "link"
+  | "finder"
+  | "auditor"
+  | "localSeedData"
+  | "importedCsv"
+  | "apify"
+  | "youtube"
+  | "fastmoss";
+
 export interface CreatorRecord {
   id: string;
+  creatorName: string;
+  handle?: string;
   platform: string;
+  profileLink: string;
   country: string;
+  language?: string;
   niche: string;
   keyword: string;
-  creatorName: string;
-  profileLink: string;
   followers: string;
   averageViews: string;
   email: string;
+  whatsapp?: string;
   instagram: string;
   tiktok: string;
   youtube: string;
   facebook: string;
+  status: CreatorStatus;
+  rate: string;
+  targetProduct?: string;
+  collaborationType?: CollaborationType | "";
+  nextStep: string;
+  lastContact?: string;
+  followUpDate?: string;
   notes: string;
+  source?: DraftSource;
+}
+
+export interface CreatorDraftRecord extends CreatorRecord {
+  source: DraftSource;
+  fitScore?: string;
+  audienceMatch?: string;
+  contentStyleMatch?: string;
+  engagementQuality?: string;
+  brandSafety?: string;
+  collaborationPotential?: string;
+  redFlags?: string;
+  recommendation?: "Approve" | "Maybe" | "Reject";
+  auditNotes?: string;
 }
 
 export interface CreatorAuditRecord {
@@ -53,6 +103,13 @@ export interface OutreachRecord {
   replyStatus: string;
   collaborationInterest: string;
   notes: string;
+  platform?: string;
+  email?: string;
+  dateContacted?: string;
+  followUpDate?: string;
+  templateUsed?: string;
+  status?: "Draft" | "Sent" | "Follow-up 1" | "Follow-up 2" | "Replied" | "No Response" | "Closed";
+  reply?: string;
 }
 
 export interface CollaborationRecord {
@@ -115,6 +172,22 @@ export interface PerformanceRecord {
   finalResult: "Reuse" | "Observe" | "Stop";
 }
 
+export interface CampaignRecord {
+  id: string;
+  campaignName: string;
+  objective: string;
+  targetMarket: string;
+  creatorName: string;
+  platform: string;
+  status: CampaignStatus;
+  startDate: string;
+  endDate: string;
+  budget: string;
+  trackingLink: string;
+  discountCode: string;
+  notes: string;
+}
+
 export interface ContentMaterialRecord {
   id: string;
   platform: string;
@@ -169,9 +242,11 @@ export interface EcommerceTrackingRecord {
 
 export interface OSDataState {
   creators: CreatorRecord[];
+  creatorDrafts: CreatorDraftRecord[];
   audits: CreatorAuditRecord[];
   outreach: OutreachRecord[];
   collaborations: CollaborationRecord[];
+  campaigns: CampaignRecord[];
   samples: SampleRecord[];
   contentTracking: ContentRecord[];
   performance: PerformanceRecord[];
