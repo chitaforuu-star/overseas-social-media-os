@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
-import { useOS } from "@/components/os/os-context";
 import { useLanguage } from "@/components/os/language-context";
+import { useSupabaseAuth } from "@/components/os/supabase-auth-context";
+import { useCreatorCrmSupabase } from "@/components/os/use-creator-crm-supabase";
 import { PageShell } from "@/components/os/page-shell";
 import { Breadcrumb } from "@/components/os/ui/breadcrumb";
+import { EmptyState } from "@/components/os/ui/empty-state";
 import { AppButton } from "@/components/os/ui/app-button";
 import { AppCard } from "@/components/os/ui/app-card";
 import { AppInput } from "@/components/os/ui/app-input";
@@ -66,36 +68,49 @@ type Props = {
 
 export function CreatorCrmNewClient({ initialCreatorId }: Props) {
   const { pick } = useLanguage();
-  const os = useOS();
+  const auth = useSupabaseAuth();
+  const crm = useCreatorCrmSupabase();
   const router = useRouter();
 
   const existingCreator = useMemo(
-    () => os.state.creators.find((item) => item.id === initialCreatorId),
-    [initialCreatorId, os.state.creators],
+    () => crm.creators.find((item) => item.id === initialCreatorId) ?? null,
+    [initialCreatorId, crm.creators],
   );
 
-  const [form, setForm] = useState<CreatorRecord>(() =>
-    existingCreator ? { ...emptyCreator(), ...existingCreator } : emptyCreator(),
-  );
+  const [form, setForm] = useState<CreatorRecord>(emptyCreator);
 
   const isEditing = Boolean(existingCreator);
 
-  const handleSave = () => {
-    if (isEditing && existingCreator) {
-      os.updateCreator(existingCreator.id, {
-        ...form,
-        id: existingCreator.id,
+  useEffect(() => {
+    if (existingCreator) {
+      queueMicrotask(() => {
+        setForm({ ...emptyCreator(), ...existingCreator });
       });
-      router.push(`/creator-crm/${existingCreator.id}`);
+      return;
+    }
+    if (!initialCreatorId) {
+      queueMicrotask(() => {
+        setForm(emptyCreator());
+      });
+    }
+  }, [existingCreator, initialCreatorId]);
+
+  const handleSave = async () => {
+    if (!auth.session?.user?.id) {
       return;
     }
 
-    const id = os.addCreator({
+    const saved = await crm.saveCreator({
       ...form,
+      id: existingCreator?.id ?? initialCreatorId ?? form.id ?? "",
       source: "manual",
     });
-    router.push(`/creator-crm/${id}`);
+    router.push(`/creator-crm/${saved.id}`);
   };
+
+  const loginHref = `/auth?next=${encodeURIComponent(
+    `/creator-crm/new${initialCreatorId ? `?id=${encodeURIComponent(initialCreatorId)}` : ""}`,
+  )}`;
 
   const setField = <K extends keyof CreatorRecord>(key: K, value: CreatorRecord[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -106,11 +121,27 @@ export function CreatorCrmNewClient({ initialCreatorId }: Props) {
       title={isEditing ? `${pick(copy.creatorCrm.actions.editCreator)}` : pick(copy.actions.addCreator)}
       description={pick(copy.creatorCrm.description)}
       headerAction={
-        <Link href="/creator-crm">
-          <AppButton variant="secondary" iconLeft={<ArrowLeft className="h-4 w-4" />}>
-            {pick(copy.actions.back)}
-          </AppButton>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/creator-crm">
+            <AppButton variant="secondary" iconLeft={<ArrowLeft className="h-4 w-4" />}>
+              {pick(copy.actions.back)}
+            </AppButton>
+          </Link>
+          {auth.session?.user?.id ? (
+            <AppButton
+              variant="secondary"
+              onClick={async () => {
+                await auth.signOut();
+              }}
+            >
+              {pick({ zh: "退出登录", en: "Sign out" })}
+            </AppButton>
+          ) : (
+            <Link href={loginHref}>
+              <AppButton variant="primary">{pick({ zh: "登录", en: "Sign in" })}</AppButton>
+            </Link>
+          )}
+        </div>
       }
     >
       <Breadcrumb
@@ -121,6 +152,29 @@ export function CreatorCrmNewClient({ initialCreatorId }: Props) {
         ]}
       />
 
+      {!auth.ready ? (
+        <AppCard className="p-5">
+          <EmptyState title="Loading" description="Preparing your Creator CRM session." />
+        </AppCard>
+      ) : !auth.session?.user?.id ? (
+        <AppCard className="p-5">
+          <EmptyState
+            title="Sign in required"
+            description="Please sign in with email and password to create or edit creators."
+            action={
+              <div className="flex flex-wrap gap-2">
+                <Link href={loginHref}>
+                  <AppButton variant="primary">{pick({ zh: "登录", en: "Sign in" })}</AppButton>
+                </Link>
+                <Link href="/auth">
+                  <AppButton variant="secondary">{pick({ zh: "注册账号", en: "Create account" })}</AppButton>
+                </Link>
+              </div>
+            }
+          />
+        </AppCard>
+      ) : (
+        <>
       <section className="grid gap-4 xl:grid-cols-2">
         <AppCard className="p-5">
           <SectionHeader
@@ -299,6 +353,8 @@ export function CreatorCrmNewClient({ initialCreatorId }: Props) {
           </div>
         </AppCard>
       </section>
+        </>
+      )}
     </PageShell>
   );
 }

@@ -1,10 +1,14 @@
-"use client";
+﻿"use client"
+
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ArrowRight, Link2, Plus, Trash2, WandSparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { LogOut, Plus, WandSparkles, Link2, Trash2, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/components/os/language-context";
 import { useOS } from "@/components/os/os-context";
+import { useSupabaseAuth } from "@/components/os/supabase-auth-context";
+import { useCreatorCrmSupabase } from "@/components/os/use-creator-crm-supabase";
 import { PageShell } from "@/components/os/page-shell";
 import { Breadcrumb } from "@/components/os/ui/breadcrumb";
 import { EmptyState } from "@/components/os/ui/empty-state";
@@ -33,18 +37,27 @@ const statusOptions: CreatorStatus[] = [
 export default function CreatorCrmPage() {
   const { pick } = useLanguage();
   const os = useOS();
+  const auth = useSupabaseAuth();
+  const crm = useCreatorCrmSupabase();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [profileUrl, setProfileUrl] = useState("");
-  const countryFilter = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("country")?.trim().toLowerCase() ?? "";
+  const [queryString, setQueryString] = useState("");
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setQueryString(window.location.search || "");
+    });
   }, []);
+
+  const countryFilter = useMemo(() => {
+    return new URLSearchParams(queryString).get("country")?.trim().toLowerCase() ?? "";
+  }, [queryString]);
 
   const savedCreators = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    return os.state.creators.filter((creator) => {
+    return crm.creators.filter((creator) => {
       const creatorCountry = creator.country.trim().toLowerCase();
       const matchKeyword =
         !keyword ||
@@ -68,7 +81,7 @@ export default function CreatorCrmPage() {
         countryFilter.includes(creatorCountry);
       return matchKeyword && matchStatus && matchCountry;
     });
-  }, [os.state.creators, search, statusFilter, countryFilter]);
+  }, [crm.creators, search, statusFilter, countryFilter]);
 
   const handlePasteLink = () => {
     if (!profileUrl.trim()) return;
@@ -99,7 +112,7 @@ export default function CreatorCrmPage() {
       lastContact: "",
       followUpDate: "",
       notes: parsed.platform
-        ? `Parsed ${parsed.platform} profile${parsed.handle ? ` • ${parsed.handle}` : ""}`
+        ? `Parsed ${parsed.platform} profile${parsed.handle ? ` 鈥?${parsed.handle}` : ""}`
         : "Profile link needs manual review",
       fitScore: "",
       audienceMatch: "",
@@ -114,22 +127,81 @@ export default function CreatorCrmPage() {
     setProfileUrl("");
   };
 
+  const handleSaveDraftToCrm = async (draft: (typeof os.state.creatorDrafts)[number]) => {
+    if (!auth.session?.user?.id) {
+      return;
+    }
+
+    const saved = await crm.saveCreator({
+      id: draft.id,
+      creatorName: draft.creatorName,
+      handle: draft.handle,
+      platform: draft.platform,
+      profileLink: draft.profileLink,
+      country: draft.country,
+      language: draft.language,
+      niche: draft.niche,
+      keyword: draft.keyword,
+      followers: draft.followers,
+      averageViews: draft.averageViews,
+      email: draft.email,
+      whatsapp: draft.whatsapp,
+      instagram: draft.instagram,
+      tiktok: draft.tiktok,
+      youtube: draft.youtube,
+      facebook: draft.facebook,
+      status: draft.status,
+      rate: draft.rate,
+      targetProduct: draft.targetProduct,
+      collaborationType: draft.collaborationType,
+      nextStep: draft.nextStep,
+      lastContact: draft.lastContact,
+      followUpDate: draft.followUpDate,
+      notes: draft.notes,
+      source: draft.source,
+    });
+
+    if (saved) {
+      os.deleteCreatorDraft(draft.id);
+    }
+  };
+  const loginHref = `/auth?next=${encodeURIComponent(`/creator-crm${queryString}`)}`;
+  const ready = auth.ready;
+  const loggedIn = Boolean(auth.session?.user?.id);
+
   return (
     <PageShell
       title={pick(copy.creatorCrm.title)}
       description={pick(copy.creatorCrm.description)}
       headerAction={
         <div className="flex flex-wrap gap-2">
-          <Link href="/creator-crm/new">
-            <AppButton variant="primary" iconLeft={<Plus className="h-4 w-4" />}>
-              {pick(copy.creatorCrm.actions.addCreatorManually)}
-            </AppButton>
-          </Link>
-          <Link href="/creator-auditor">
-            <AppButton variant="secondary" iconLeft={<WandSparkles className="h-4 w-4" />}>
-              {pick(copy.creatorCrm.actions.runAudit)}
-            </AppButton>
-          </Link>
+          {loggedIn ? (
+            <>
+              <Link href="/creator-crm/new">
+                <AppButton variant="primary" iconLeft={<Plus className="h-4 w-4" />}>
+                  {pick(copy.creatorCrm.actions.addCreatorManually)}
+                </AppButton>
+              </Link>
+              <Link href="/creator-auditor">
+                <AppButton variant="secondary" iconLeft={<WandSparkles className="h-4 w-4" />}>
+                  {pick(copy.creatorCrm.actions.runAudit)}
+                </AppButton>
+              </Link>
+              <AppButton
+                variant="secondary"
+                iconLeft={<LogOut className="h-4 w-4" />}
+                onClick={async () => {
+                  await auth.signOut();
+                }}
+              >
+                {pick({ zh: "退出登录", en: "Sign out" })}
+              </AppButton>
+            </>
+          ) : (
+            <Link href={loginHref}>
+              <AppButton variant="primary">{pick({ zh: "登录", en: "Sign in" })}</AppButton>
+            </Link>
+          )}
         </div>
       }
     >
@@ -139,7 +211,29 @@ export default function CreatorCrmPage() {
           { label: pick(copy.nav.creatorCrm) },
         ]}
       />
-
+      {!ready ? (
+        <AppCard className="p-5">
+          <EmptyState title="Loading" description="Preparing your Creator CRM session." />
+        </AppCard>
+      ) : !loggedIn ? (
+        <AppCard className="p-5">
+          <EmptyState
+            title="Sign in required"
+            description="Please sign in with email and password to view your Creator CRM data."
+            action={
+              <div className="flex flex-wrap gap-2">
+                <Link href={loginHref}>
+                  <AppButton variant="primary">{pick({ zh: "登录", en: "Sign in" })}</AppButton>
+                </Link>
+                <Link href="/auth">
+                  <AppButton variant="secondary">{pick({ zh: "注册", en: "Create account" })}</AppButton>
+                </Link>
+              </div>
+            }
+          />
+        </AppCard>
+      ) : (
+        <>
       <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <AppCard className="p-5" tone="pink">
           <SectionHeader
@@ -213,17 +307,17 @@ export default function CreatorCrmPage() {
                     </div>
                     <p className="os-helper-text">
                       {draft.platform || "Platform pending"}{" "}
-                      {draft.notes ? `• ${draft.notes}` : "• No notes yet"}
+                      {draft.notes ? `鈥?${draft.notes}` : "鈥?No notes yet"}
                     </p>
                     <p className="text-sm text-[#374151]">
-                      {draft.country ? `${draft.country} • ` : ""}
+                      {draft.country ? `${draft.country} 鈥?` : ""}
                       {draft.niche || "Niche pending"}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <AppButton
                       variant="primary"
-                      onClick={() => os.saveCreatorDraftToCRM(draft.id)}
+                      onClick={() => handleSaveDraftToCrm(draft)}
                     >
                       {pick(copy.creatorCrm.actions.saveDraftToCrm)}
                     </AppButton>
@@ -271,7 +365,15 @@ export default function CreatorCrmPage() {
           }
         />
 
-        {savedCreators.length === 0 ? (
+        {crm.loading ? (
+          <div className="mt-4">
+            <EmptyState title="Loading creators" description="Reading your Supabase workspace." />
+          </div>
+        ) : crm.error ? (
+          <div className="mt-4">
+            <EmptyState title="Failed to load" description={crm.error} />
+          </div>
+        ) : savedCreators.length === 0 ? (
           <div className="mt-4">
             <EmptyState
               title={pick(copy.creatorCrm.emptyTitle)}
@@ -366,6 +468,12 @@ export default function CreatorCrmPage() {
           </div>
         )}
       </AppCard>
+        </>
+      )}
     </PageShell>
   );
 }
+
+
+
+

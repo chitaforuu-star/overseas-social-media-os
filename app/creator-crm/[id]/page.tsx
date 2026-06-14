@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, MessageSquarePlus, PencilLine, WandSparkles } from "lucide-react";
 import { useOS } from "@/components/os/os-context";
 import { useLanguage } from "@/components/os/language-context";
+import { useSupabaseAuth } from "@/components/os/supabase-auth-context";
+import { useCreatorCrmSupabase } from "@/components/os/use-creator-crm-supabase";
 import { PageShell } from "@/components/os/page-shell";
 import { Breadcrumb } from "@/components/os/ui/breadcrumb";
 import { EmptyState } from "@/components/os/ui/empty-state";
@@ -17,8 +19,79 @@ import { copy } from "@/lib/translations";
 export default function CreatorCrmDetailPage() {
   const { pick } = useLanguage();
   const os = useOS();
+  const auth = useSupabaseAuth();
+  const crm = useCreatorCrmSupabase();
   const params = useParams<{ id: string }>();
-  const creator = os.state.creators.find((item) => item.id === params.id);
+  const creator = crm.creators.find((item) => item.id === params.id);
+
+  const loginHref = `/auth?next=${encodeURIComponent(`/creator-crm/${params.id}`)}`;
+
+  if (!auth.ready) {
+    return (
+      <PageShell
+        title={pick(copy.creatorCrm.title)}
+        description={pick(copy.creatorCrm.description)}
+        headerAction={
+          <Link href="/creator-crm">
+            <AppButton variant="secondary" iconLeft={<ArrowLeft className="h-4 w-4" />}>
+              {pick(copy.actions.back)}
+            </AppButton>
+          </Link>
+        }
+      >
+        <Breadcrumb
+          items={[
+            { label: pick(copy.nav.dashboard), href: "/" },
+            { label: pick(copy.nav.creatorCrm), href: "/creator-crm" },
+            { label: "Creator" },
+          ]}
+        />
+        <AppCard className="p-5">
+          <EmptyState title="Loading" description="Preparing your Creator CRM session." />
+        </AppCard>
+      </PageShell>
+    );
+  }
+
+  if (!auth.session?.user?.id) {
+    return (
+      <PageShell
+        title={pick(copy.creatorCrm.title)}
+        description={pick(copy.creatorCrm.description)}
+        headerAction={
+          <Link href="/creator-crm">
+            <AppButton variant="secondary" iconLeft={<ArrowLeft className="h-4 w-4" />}>
+              {pick(copy.actions.back)}
+            </AppButton>
+          </Link>
+        }
+      >
+        <Breadcrumb
+          items={[
+            { label: pick(copy.nav.dashboard), href: "/" },
+            { label: pick(copy.nav.creatorCrm), href: "/creator-crm" },
+            { label: "Sign in" },
+          ]}
+        />
+        <AppCard className="p-5">
+          <EmptyState
+            title="Sign in required"
+            description="Please sign in with email and password to view creator details."
+            action={
+              <div className="flex flex-wrap gap-2">
+                <Link href={loginHref}>
+                  <AppButton variant="primary">{pick({ zh: "登录", en: "Sign in" })}</AppButton>
+                </Link>
+                <Link href="/auth">
+                  <AppButton variant="secondary">{pick({ zh: "注册账号", en: "Create account" })}</AppButton>
+                </Link>
+              </div>
+            }
+          />
+        </AppCard>
+      </PageShell>
+    );
+  }
 
   if (!creator) {
     return (
