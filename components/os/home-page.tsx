@@ -172,6 +172,10 @@ export function HomePage() {
   const [platformFilter, setPlatformFilter] = useState<(typeof mapPlatformOptions)[number]>("All");
   const [marketFilter, setMarketFilter] = useState<(typeof mapMarketOptions)[number]>("All");
   const [statusFilter, setStatusFilter] = useState<(typeof mapStatusOptions)[number]>("All");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedRegionCode, setSelectedRegionCode] = useState<
+    (typeof worldRegions)[number]["code"] | null
+  >(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [hoveredRegion, setHoveredRegion] = useState<(typeof worldRegions)[number]["code"] | null>(
     null,
@@ -236,34 +240,11 @@ export function HomePage() {
       }),
     [marketFilter, os.state.creators, platformFilter, statusFilter],
   );
-  const visibleCreators = useMemo(
-    () =>
-      os.state.creators.filter((creator) => {
-        const platformMatch =
-          platformFilter === "All" || matchText(creator.platform, platformFilter);
-        const statusMatch = matchesStatusFilter(creator.status, statusFilter);
-        const marketMatch =
-          marketFilter === "All" ||
-          worldRegions.some(
-            (region) =>
-              region.code === marketFilter &&
-              countryMatches(creator.country ?? "", region.aliases),
-          );
-        return platformMatch && statusMatch && marketMatch;
-      }),
-    [marketFilter, os.state.creators, platformFilter, statusFilter],
-  );
-  const activeRegionCode =
-    hoveredRegion ?? worldRegionStats.find((region) => region.count > 0)?.code ?? "US";
-  const activeRegion =
-    (worldRegionStats.find((region) => region.code === activeRegionCode) ??
-      worldRegionStats[0] ??
-      worldRegions[0]) as (typeof worldRegionStats)[number];
-  const filteredMarketCount = worldRegionStats.filter((region) => region.count > 0).length;
-  const totalFilteredCreators = visibleCreators.length;
-  const filteredSamplesSentCount = visibleCreators.filter((creator) => creator.status === "sample_sent").length;
-  const filteredPostedCount = visibleCreators.filter((creator) => creator.status === "posted").length;
-
+  const selectedRegion = selectedRegionCode
+    ? ((worldRegionStats.find((region) => region.code === selectedRegionCode) ??
+        worldRegionStats[0] ??
+        worldRegions[0]) as (typeof worldRegionStats)[number])
+    : null;
   const tasks: FocusTask[] = [
     {
       title: pick(copy.dashboard.tasks.audit),
@@ -319,134 +300,178 @@ export function HomePage() {
 
       <section className="space-y-4">
         <AppCard className="overflow-hidden border border-white/8 bg-[#0E131A] p-0 shadow-[0_36px_100px_rgba(0,0,0,0.34)]">
-          <div className="relative min-h-[720px] overflow-hidden">
+          <div
+            className="relative h-[720px] overflow-hidden"
+            onClick={() => {
+              setFiltersOpen(false);
+              setSelectedRegionCode(null);
+              setHoveredRegion(null);
+            }}
+          >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(59,130,246,0.14),transparent_34%),radial-gradient(circle_at_24%_56%,rgba(139,92,246,0.1),transparent_22%),radial-gradient(circle_at_72%_58%,rgba(34,197,94,0.08),transparent_20%)]" />
 
-            <aside className="absolute left-8 top-8 z-40 w-[260px] rounded-[22px] border border-white/10 bg-[#111720]/92 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
-                <Filter className="h-4 w-4 text-white/55" />
-                {pick({ zh: "筛选", en: "Filters" })}
-              </div>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Platform</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {mapPlatformOptions.map((option) => {
-                      const selected = platformFilter === option;
-                      return (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setPlatformFilter(option)}
-                          className={[
-                            "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
-                            selected
-                              ? "border-white/15 bg-white text-[#0E131A]"
-                              : "border-white/10 bg-white/5 text-white/72 hover:bg-white/10",
-                          ].join(" ")}
-                        >
-                          {option}
-                        </button>
-                      );
-                    })}
-                  </div>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setFiltersOpen((value) => !value);
+                setSelectedRegionCode(null);
+                setHoveredRegion(null);
+              }}
+              className="absolute left-6 top-6 z-40 inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-[#111720]/92 px-3 text-xs font-semibold text-white/82 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl transition hover:bg-white/10"
+            >
+              <Filter className="h-4 w-4" />
+              {pick({ zh: "筛选", en: "Filter" })}
+            </button>
+
+            {filtersOpen && (
+              <aside
+                onClick={(event) => event.stopPropagation()}
+                className="absolute left-6 top-20 z-40 w-[250px] rounded-[20px] border border-white/10 bg-[#111720]/94 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                    Filters
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-medium text-white/55 transition hover:bg-white/10"
+                  >
+                    ×
+                  </button>
                 </div>
-
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Market</p>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {mapMarketOptions.map((option) => {
-                      const selected = marketFilter === option;
-                      return (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setMarketFilter(option)}
-                          className={[
-                            "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
-                            selected
-                              ? "border-white/15 bg-white text-[#0E131A]"
-                              : "border-white/10 bg-white/5 text-white/72 hover:bg-white/10",
-                          ].join(" ")}
-                        >
-                          {option}
-                        </button>
-                      );
-                    })}
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Platform</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {mapPlatformOptions.map((option) => {
+                        const selected = platformFilter === option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setPlatformFilter(option)}
+                            className={[
+                              "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
+                              selected
+                                ? "border-white/15 bg-white text-[#0E131A]"
+                                : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
+                            ].join(" ")}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Status</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {mapStatusOptions.map((option) => {
-                      const selected = statusFilter === option;
-                      const statusKey =
-                        option === "All"
-                          ? "new"
-                          : option === "Sample Sent"
-                            ? "sample_sent"
-                            : option === "Posted"
-                              ? "posted"
-                              : normalizeText(option);
-                      const tint = mapStatusStyles[statusKey]?.tint ?? "rgba(255,255,255,0.08)";
-                      return (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setStatusFilter(option)}
-                          className={[
-                            "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
-                            selected ? "text-white" : "text-white/72 hover:bg-white/10",
-                          ].join(" ")}
-                          style={{
-                            borderColor: selected ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.10)",
-                            background: selected ? tint : "rgba(255,255,255,0.05)",
-                          }}
-                        >
-                          {option}
-                        </button>
-                      );
-                    })}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Market</p>
+                    <div className="mt-2 grid grid-cols-2 gap-1.5">
+                      {mapMarketOptions.map((option) => {
+                        const selected = marketFilter === option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setMarketFilter(option)}
+                            className={[
+                              "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
+                              selected
+                                ? "border-white/15 bg-white text-[#0E131A]"
+                                : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
+                            ].join(" ")}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Status</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {mapStatusOptions.map((option) => {
+                        const selected = statusFilter === option;
+                        const statusKey =
+                          option === "All"
+                            ? "new"
+                            : option === "Sample Sent"
+                              ? "sample_sent"
+                              : option === "Posted"
+                                ? "posted"
+                                : normalizeText(option);
+                        const tint = mapStatusStyles[statusKey]?.tint ?? "rgba(255,255,255,0.08)";
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setStatusFilter(option)}
+                            className={[
+                              "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
+                              selected ? "text-white" : "text-white/70 hover:bg-white/10",
+                            ].join(" ")}
+                            style={{
+                              borderColor: selected ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.10)",
+                              background: selected ? tint : "rgba(255,255,255,0.05)",
+                            }}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlatformFilter("All");
+                      setMarketFilter("All");
+                      setStatusFilter("All");
+                      setZoomLevel(1);
+                      setHoveredRegion(null);
+                      setSelectedRegionCode(null);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/70 transition hover:bg-white/10"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {pick({ zh: "重置", en: "Reset" })}
+                  </button>
                 </div>
+              </aside>
+            )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPlatformFilter("All");
-                    setMarketFilter("All");
-                    setStatusFilter("All");
-                    setZoomLevel(1);
-                    setHoveredRegion(null);
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/70 transition hover:bg-white/10"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  {pick({ zh: "重置", en: "Reset" })}
-                </button>
-              </div>
-            </aside>
-
-            <div className="absolute right-7 top-1/2 z-40 -translate-y-1/2">
+            <div className="absolute right-6 top-1/2 z-40 -translate-y-1/2">
               <div className="flex flex-col gap-2 rounded-full border border-white/10 bg-[#111720]/92 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl">
                 <button
                   type="button"
-                  onClick={() => setZoomLevel((value) => Math.min(1.3, Number((value + 0.1).toFixed(2))))}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setZoomLevel((value) => Math.min(1.3, Number((value + 0.1).toFixed(2))));
+                  }}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/5 text-white/85 transition hover:bg-white/10"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setZoomLevel((value) => Math.max(0.85, Number((value - 0.1).toFixed(2))))}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setZoomLevel((value) => Math.max(0.85, Number((value - 0.1).toFixed(2))));
+                  }}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/5 text-white/85 transition hover:bg-white/10"
                 >
                   <ZoomOut className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setZoomLevel(1)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setZoomLevel(1);
+                  }}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/5 text-white/85 transition hover:bg-white/10"
                 >
                   <RotateCcw className="h-4 w-4" />
@@ -454,45 +479,54 @@ export function HomePage() {
               </div>
             </div>
 
-            <div className="absolute right-8 top-8 z-40 w-[320px] rounded-[24px] border border-white/10 bg-[#111720]/92 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/38">Country</p>
-                  <h3 className="mt-1 text-lg font-semibold text-white">{activeRegion.label}</h3>
-                </div>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70">
-                  {activeRegion.count}
-                </span>
-              </div>
-
-              <div className="mt-4 grid gap-2">
-                {[
-                  { label: "Creators", value: activeRegion.count },
-                  { label: "Contacted", value: activeRegion.statusTotals.contacted },
-                  { label: "Replied", value: activeRegion.statusTotals.replied },
-                  { label: "Samples", value: activeRegion.statusTotals.sample_sent },
-                  { label: "Posted", value: activeRegion.statusTotals.posted },
-                  { label: "Top Platform", value: activeRegion.topPlatform },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-sm"
-                  >
-                    <span className="text-white/50">{item.label}</span>
-                    <span className="font-medium text-white">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                href={activeRegion.href}
-                className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-[#0E131A] transition hover:bg-[#F3F4F6]"
+            {selectedRegion && (
+              <div
+                onClick={(event) => event.stopPropagation()}
+                className="absolute right-6 top-16 z-40 w-[300px] rounded-[24px] border border-white/10 bg-[#111720]/94 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl"
               >
-                {pick({ zh: "View Creators", en: "View Creators" })}
-              </Link>
-            </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/38">Country</p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">{selectedRegion.label}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRegionCode(null)}
+                    className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-medium text-white/55 transition hover:bg-white/10"
+                  >
+                    ?
+                  </button>
+                </div>
 
-            <div className="absolute bottom-7 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+                <div className="mt-4 grid gap-2">
+                  {[
+                    { label: "Creators", value: selectedRegion.count },
+                    { label: "Contacted", value: selectedRegion.statusTotals.contacted },
+                    { label: "Replied", value: selectedRegion.statusTotals.replied },
+                    { label: "Samples", value: selectedRegion.statusTotals.sample_sent },
+                    { label: "Posted", value: selectedRegion.statusTotals.posted },
+                    { label: "Top Platform", value: selectedRegion.topPlatform },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-sm"
+                    >
+                      <span className="text-white/50">{item.label}</span>
+                      <span className="font-medium text-white">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href={selectedRegion.href}
+                  className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-[#0E131A] transition hover:bg-[#F3F4F6]"
+                >
+                  {pick({ zh: "查看达人", en: "View Creators" })}
+                </Link>
+              </div>
+            )}
+
+            <div className="absolute bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
               {Object.values(mapStatusStyles).map((config) => (
                 <span
                   key={config.label}
@@ -504,26 +538,7 @@ export function HomePage() {
               ))}
             </div>
 
-            <div className="absolute bottom-7 left-7 z-30 rounded-[20px] border border-white/10 bg-[#111720]/92 px-4 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                  Summary
-                </span>
-                {[
-                  { label: "Creators", value: totalFilteredCreators },
-                  { label: "Samples", value: filteredSamplesSentCount },
-                  { label: "Markets", value: filteredMarketCount },
-                  { label: "Posted", value: filteredPostedCount },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    <span className="text-xs text-white/45">{item.label}</span>
-                    <span className="text-sm font-semibold text-white">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="absolute left-1/2 top-1/2 z-10 h-[700px] w-[min(1400px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-1/2 z-10 h-[700px] w-[min(1400px,calc(100%-1rem))] -translate-x-1/2 -translate-y-1/2">
               <div
                 className="absolute inset-0 origin-center transition-transform duration-300"
                 style={{ transform: `scale(${zoomLevel})` }}
@@ -577,49 +592,73 @@ export function HomePage() {
                   const statusKey = active ? region.topStatusKey : "new";
                   const statusColor = active ? mapStatusStyles[statusKey]?.color : "#64748B";
                   const statusTint = active ? mapStatusStyles[statusKey]?.tint : "rgba(100,116,139,0.18)";
-                  const selected = hoveredRegion === region.code || activeRegionCode === region.code;
+                  const selected = hoveredRegion === region.code || selectedRegionCode === region.code;
+                  const tooltipOnRight = Number.parseFloat(region.left) < 68;
 
                   return (
-                    <button
-                      key={region.code}
-                      type="button"
-                      onMouseEnter={() => setHoveredRegion(region.code)}
-                      onMouseLeave={() => setHoveredRegion(null)}
-                      onFocus={() => setHoveredRegion(region.code)}
-                      onBlur={() => setHoveredRegion(null)}
-                      onClick={() => setHoveredRegion(region.code)}
-                      className="group absolute z-20 -translate-x-1/2 -translate-y-1/2 outline-none"
-                      style={{ top: region.top, left: region.left }}
-                    >
-                      <span
-                        className={[
-                          "flex items-center gap-2 rounded-full border px-2 py-1 shadow-[0_12px_24px_rgba(0,0,0,0.3)] transition duration-200",
-                          selected ? "-translate-y-0.5 scale-[1.04]" : "",
-                        ].join(" ")}
-                        style={{
-                          borderColor: selected ? "rgba(255,255,255,0.24)" : "rgba(255,255,255,0.10)",
-                          background: "rgba(12,16,22,0.88)",
-                          boxShadow: selected
-                            ? `0 0 0 1px rgba(255,255,255,0.05), 0 0 22px ${statusColor}40`
-                            : "0 0 0 1px rgba(255,255,255,0.04)",
+                    <div key={region.code}>
+                      <button
+                        type="button"
+                        onMouseEnter={() => setHoveredRegion(region.code)}
+                        onMouseLeave={() => setHoveredRegion(null)}
+                        onFocus={() => setHoveredRegion(region.code)}
+                        onBlur={() => setHoveredRegion(null)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedRegionCode(region.code);
                         }}
+                        className="group absolute z-20 -translate-x-1/2 -translate-y-1/2 outline-none"
+                        style={{ top: region.top, left: region.left }}
                       >
                         <span
-                          className="h-3.5 w-3.5 rounded-full"
+                          className={[
+                            "flex items-center gap-2 rounded-full border px-2 py-1 transition duration-200",
+                            selected ? "-translate-y-0.5 scale-[1.04]" : "",
+                          ].join(" ")}
                           style={{
-                            background: statusColor,
-                            boxShadow: `0 0 0 5px ${statusTint}`,
-                            opacity: active ? 1 : 0.35,
+                            borderColor: selected ? "rgba(255,255,255,0.24)" : "rgba(255,255,255,0.10)",
+                            background: "rgba(12,16,22,0.88)",
+                            boxShadow: selected
+                              ? `0 0 0 1px rgba(255,255,255,0.05), 0 0 22px ${statusColor}40`
+                              : "0 0 0 1px rgba(255,255,255,0.04)",
                           }}
-                        />
-                        <span
-                          className="min-w-8 rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white/90"
-                          style={{ opacity: active ? 1 : 0.45 }}
                         >
-                          {region.count}
+                          <span
+                            className="h-3.5 w-3.5 rounded-full"
+                            style={{
+                              background: statusColor,
+                              boxShadow: `0 0 0 5px ${statusTint}`,
+                              opacity: active ? 1 : 0.35,
+                            }}
+                          />
+                          <span
+                            className="min-w-8 rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white/90"
+                            style={{ opacity: active ? 1 : 0.45 }}
+                          >
+                            {region.count}
+                          </span>
                         </span>
-                      </span>
-                    </button>
+                      </button>
+
+                      {hoveredRegion === region.code && (
+                        <div
+                          className="pointer-events-none absolute z-30 w-[180px] rounded-[18px] border border-white/10 bg-[#111720]/96 p-3 text-white shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl"
+                          style={{
+                            top: `calc(${region.top} - 58px)`,
+                            left: tooltipOnRight ? `calc(${region.left} + 14px)` : `calc(${region.left} - 198px)`,
+                          }}
+                        >
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/38">
+                            Country
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-white">{region.label}</p>
+                          <p className="mt-2 text-xs text-white/55">Creators {region.count}</p>
+                          <p className="mt-1 text-[11px] text-white/50">
+                            {region.statusTotals.contacted} Contacted ? {region.statusTotals.replied} Replied ? {region.statusTotals.sample_sent} Samples
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
