@@ -299,16 +299,17 @@ export function HomePage() {
     >
 
       <section className="space-y-4">
-        <AppCard className="overflow-hidden border border-white/8 bg-[#0E131A] p-0 shadow-[0_36px_100px_rgba(0,0,0,0.34)]">
+        <AppCard className="overflow-hidden border border-white/8 bg-[#071426] p-0 shadow-[0_36px_100px_rgba(0,0,0,0.34)]">
           <div
-            className="relative h-[720px] overflow-hidden"
+            className="relative h-[720px] overflow-hidden bg-[radial-gradient(circle_at_50%_42%,rgba(150,223,255,0.18),transparent_30%),radial-gradient(circle_at_50%_48%,rgba(62,130,255,0.12),transparent_42%),linear-gradient(180deg,#0B1B33_0%,#071426_54%,#06101F_100%)]"
             onClick={() => {
               setFiltersOpen(false);
               setSelectedRegionCode(null);
               setHoveredRegion(null);
             }}
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(59,130,246,0.14),transparent_34%),radial-gradient(circle_at_24%_56%,rgba(139,92,246,0.1),transparent_22%),radial-gradient(circle_at_72%_58%,rgba(34,197,94,0.08),transparent_20%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_44%,rgba(255,255,255,0.10),transparent_18%),radial-gradient(circle_at_50%_48%,rgba(135,197,255,0.14),transparent_36%),radial-gradient(circle_at_50%_52%,rgba(10,76,163,0.24),transparent_54%)] opacity-85" />
+            <div className="pointer-events-none map-sheen absolute inset-0 opacity-50 mix-blend-screen bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.06),transparent_32%),linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.12)_48%,transparent_54%),linear-gradient(300deg,transparent_0%,rgba(64,164,255,0.10)_44%,transparent_60%)]" />
 
             <button
               type="button"
@@ -526,11 +527,11 @@ export function HomePage() {
               </div>
             )}
 
-            <div className="absolute bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+            <div className="absolute bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.24)] backdrop-blur-2xl">
               {Object.values(mapStatusStyles).map((config) => (
                 <span
                   key={config.label}
-                  className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/78"
+                  className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/82"
                 >
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: config.color }} />
                   {config.label}
@@ -538,7 +539,7 @@ export function HomePage() {
               ))}
             </div>
 
-            <div className="absolute left-1/2 top-1/2 z-10 h-[700px] w-[min(1400px,calc(100%-1rem))] -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-1/2 z-10 h-[700px] w-[min(1400px,calc(100%-1rem))] -translate-x-1/2 -translate-y-1/2 map-float">
               <div
                 className="absolute inset-0 origin-center transition-transform duration-300"
                 style={{ transform: `scale(${zoomLevel})` }}
@@ -549,41 +550,74 @@ export function HomePage() {
                   aria-hidden="true"
                 >
                   <defs>
-                    <radialGradient id="ops-map-glow" cx="50%" cy="40%" r="70%">
-                      <stop offset="0%" stopColor="#1A2330" />
-                      <stop offset="70%" stopColor="#0E131A" />
-                      <stop offset="100%" stopColor="#0B0F14" />
+                    <radialGradient id="ops-map-glow" cx="50%" cy="40%" r="65%">
+                      <stop offset="0%" stopColor="#C9F5FF" stopOpacity="0.40" />
+                      <stop offset="32%" stopColor="#7CD8FF" stopOpacity="0.24" />
+                      <stop offset="68%" stopColor="#0E62B4" stopOpacity="0.78" />
+                      <stop offset="100%" stopColor="#081223" stopOpacity="1" />
+                    </radialGradient>
+                    <radialGradient id="ops-ocean-sheen" cx="40%" cy="30%" r="65%">
+                      <stop offset="0%" stopColor="#E6FBFF" stopOpacity="0.72" />
+                      <stop offset="18%" stopColor="#89D8FF" stopOpacity="0.20" />
+                      <stop offset="54%" stopColor="#2E86EA" stopOpacity="0.10" />
+                      <stop offset="100%" stopColor="#0B1A33" stopOpacity="0" />
                     </radialGradient>
                     <linearGradient id="ops-land" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#59606C" />
-                      <stop offset="100%" stopColor="#434A56" />
+                      <stop offset="0%" stopColor="#DDF9CB" stopOpacity="0.72" />
+                      <stop offset="44%" stopColor="#ACEAA1" stopOpacity="0.70" />
+                      <stop offset="100%" stopColor="#6CCB7E" stopOpacity="0.78" />
                     </linearGradient>
+                    <clipPath id="ops-globe-clip">
+                      <circle cx="700" cy="350" r="314" />
+                    </clipPath>
+                    <filter id="ops-globe-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur in="SourceAlpha" stdDeviation="16" result="blur" />
+                      <feOffset in="blur" dy="16" result="offsetBlur" />
+                      <feColorMatrix
+                        in="offsetBlur"
+                        type="matrix"
+                        values="0 0 0 0 0.02 0 0 0 0 0.06 0 0 0 0 0.12 0 0 0 0.5 0"
+                        result="shadow"
+                      />
+                      <feMerge>
+                        <feMergeNode in="shadow" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
                   </defs>
-                  <rect width="1400" height="700" fill="url(#ops-map-glow)" />
-                  <g opacity="0.16" stroke="rgba(255,255,255,0.16)" strokeWidth="1">
-                    <path d="M0 118H1400" />
-                    <path d="M0 246H1400" />
-                    <path d="M0 374H1400" />
-                    <path d="M0 502H1400" />
-                    <path d="M180 0V700" />
-                    <path d="M420 0V700" />
-                    <path d="M720 0V700" />
-                    <path d="M1000 0V700" />
+                  <g filter="url(#ops-globe-shadow)">
+                    <circle cx="700" cy="350" r="314" fill="url(#ops-map-glow)" />
+                    <circle cx="700" cy="350" r="314" fill="url(#ops-ocean-sheen)" opacity="0.85" />
+                    <circle cx="700" cy="350" r="314" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
                   </g>
-                  <g fill="url(#ops-land)" stroke="#2A313D" strokeWidth="1.25">
-                    <path d="M118 214L172 176L254 184L326 216L318 276L258 302L178 295L130 262L118 214Z" />
-                    <path d="M205 332L271 346L307 394L295 466L244 540L210 505L198 444L200 385L205 332Z" />
-                    <path d="M496 150L565 136L643 152L672 197L647 235L589 228L534 200L496 150Z" />
-                    <path d="M541 250L620 255L678 294L692 353L659 416L601 431L555 390L537 324L541 250Z" />
-                    <path d="M760 164L868 144L990 167L1080 214L1068 275L1007 303L915 292L828 261L760 164Z" />
-                    <path d="M818 316L947 320L1090 356L1158 420L1118 488L1005 502L885 465L815 403L818 316Z" />
-                    <path d="M1165 432L1240 438L1278 476L1268 523L1210 530L1172 495L1165 432Z" />
-                  </g>
-                  <g opacity="0.2" fill="none" stroke="rgba(255,255,255,0.14)">
-                    <path d="M220 248C324 214 446 206 578 220" />
-                    <path d="M270 367C386 340 523 336 682 352" />
-                    <path d="M620 208C744 183 890 182 1058 208" />
-                    <path d="M603 365C738 343 892 345 1062 372" />
+                  <g clipPath="url(#ops-globe-clip)">
+                    <g opacity="0.24" stroke="rgba(255,255,255,0.22)" strokeWidth="1">
+                      <path d="M356 174C476 114 626 92 764 104" />
+                      <path d="M306 262C424 212 622 198 814 218" />
+                      <path d="M270 358C412 322 600 312 832 332" />
+                      <path d="M302 452C442 420 620 418 842 446" />
+                      <path d="M364 546C496 522 644 520 786 540" />
+                      <path d="M396 112V588" />
+                      <path d="M520 92V604" />
+                      <path d="M676 78V616" />
+                      <path d="M832 92V604" />
+                      <path d="M944 114V588" />
+                    </g>
+                    <g fill="url(#ops-land)" stroke="rgba(255,255,255,0.20)" strokeWidth="1.1">
+                      <path d="M118 214L172 176L254 184L326 216L318 276L258 302L178 295L130 262L118 214Z" />
+                      <path d="M205 332L271 346L307 394L295 466L244 540L210 505L198 444L200 385L205 332Z" />
+                      <path d="M496 150L565 136L643 152L672 197L647 235L589 228L534 200L496 150Z" />
+                      <path d="M541 250L620 255L678 294L692 353L659 416L601 431L555 390L537 324L541 250Z" />
+                      <path d="M760 164L868 144L990 167L1080 214L1068 275L1007 303L915 292L828 261L760 164Z" />
+                      <path d="M818 316L947 320L1090 356L1158 420L1118 488L1005 502L885 465L815 403L818 316Z" />
+                      <path d="M1165 432L1240 438L1278 476L1268 523L1210 530L1172 495L1165 432Z" />
+                    </g>
+                    <g opacity="0.18" fill="none" stroke="rgba(160,220,255,0.28)" strokeWidth="1.1">
+                      <path d="M230 256C334 220 454 212 578 224" />
+                      <path d="M274 365C388 338 521 334 682 350" />
+                      <path d="M620 214C742 188 886 188 1048 210" />
+                      <path d="M603 364C734 344 888 346 1058 372" />
+                    </g>
                   </g>
                 </svg>
 
@@ -627,13 +661,15 @@ export function HomePage() {
                             className="h-3.5 w-3.5 rounded-full"
                             style={{
                               background: statusColor,
-                              boxShadow: `0 0 0 5px ${statusTint}`,
-                              opacity: active ? 1 : 0.35,
+                              boxShadow: active
+                                ? `0 0 0 6px ${statusTint}, 0 0 24px ${statusColor}55`
+                                : `0 0 0 5px ${statusTint}`,
+                              opacity: active ? 1 : 0.28,
                             }}
                           />
                           <span
                             className="min-w-8 rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white/90"
-                            style={{ opacity: active ? 1 : 0.45 }}
+                            style={{ opacity: active ? 1 : 0.4 }}
                           >
                             {region.count}
                           </span>
@@ -642,7 +678,7 @@ export function HomePage() {
 
                       {hoveredRegion === region.code && (
                         <div
-                          className="pointer-events-none absolute z-30 w-[180px] rounded-[18px] border border-white/10 bg-[#111720]/96 p-3 text-white shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl"
+                          className="pointer-events-none absolute z-30 w-[180px] rounded-[18px] border border-white/12 bg-white/10 p-3 text-white shadow-[0_18px_40px_rgba(0,0,0,0.28)] backdrop-blur-2xl"
                           style={{
                             top: `calc(${region.top} - 58px)`,
                             left: tooltipOnRight ? `calc(${region.left} + 14px)` : `calc(${region.left} - 198px)`,
@@ -654,7 +690,7 @@ export function HomePage() {
                           <p className="mt-1 text-sm font-semibold text-white">{region.label}</p>
                           <p className="mt-2 text-xs text-white/55">Creators {region.count}</p>
                           <p className="mt-1 text-[11px] text-white/50">
-                            {region.statusTotals.contacted} Contacted ? {region.statusTotals.replied} Replied ? {region.statusTotals.sample_sent} Samples
+                            {region.statusTotals.contacted} Contacted · {region.statusTotals.replied} Replied · {region.statusTotals.sample_sent} Samples
                           </p>
                         </div>
                       )}
@@ -666,6 +702,45 @@ export function HomePage() {
           </div>
         </AppCard>
       </section>
+
+      <style jsx global>{`
+        @keyframes mapFloat {
+          0%,
+          100% {
+            transform: translate(-50%, -50%) translateY(0px);
+          }
+          50% {
+            transform: translate(-50%, -50%) translateY(-6px);
+          }
+        }
+
+        @keyframes mapSheen {
+          0%,
+          100% {
+            transform: translateX(-2%) translateY(0);
+          }
+          50% {
+            transform: translateX(2%) translateY(-1%);
+          }
+        }
+
+        .map-float {
+          animation: mapFloat 18s ease-in-out infinite;
+          will-change: transform;
+        }
+
+        .map-sheen {
+          animation: mapSheen 24s ease-in-out infinite;
+          will-change: transform;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .map-float,
+          .map-sheen {
+            animation: none;
+          }
+        }
+      `}</style>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
