@@ -246,182 +246,144 @@ export function HomePage() {
     >
       <section className="space-y-4">
         <AppCard className="overflow-hidden border-[#D7E7F7] bg-[#F8FBFF] p-0 shadow-[0_28px_70px_rgba(15,23,42,0.06)]">
-          <div className="grid gap-0">
-            <div className="relative min-h-[520px] overflow-hidden bg-[linear-gradient(180deg,#F6FBFF_0%,#EEF7FD_100%)] p-5 sm:p-6">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(125,211,252,0.55),transparent_22%),radial-gradient(circle_at_82%_16%,rgba(167,243,208,0.34),transparent_18%),radial-gradient(circle_at_42%_86%,rgba(255,255,255,0.92),transparent_28%)]" />
-              <div className="relative flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6B7280]">
-                    {pick({ zh: "全球创作者网络", en: "Global Creator Network" })}
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-[#111827] sm:text-[2rem]">
-                    {pick({
-                      zh: "明亮的半球地球，显示国家分布与寄样覆盖",
-                      en: "A bright hemisphere map showing creator distribution and sample coverage",
-                    })}
-                  </h2>
-                </div>
-                <span className="rounded-full border border-[#D7E7F7] bg-white px-3 py-1 text-xs font-medium text-[#4B5563] shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                  {pick({ zh: "本地数据", en: "Local data" })}
-                </span>
+          <div className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6B7280]">
+                  Global Creator Network
+                </p>
+                <p className="mt-2 text-sm text-[#6B7280]">
+                  Creator Coverage Across Markets
+                </p>
+                <p className="mt-2 text-sm text-[#6B7280]">
+                  Track creator distribution, samples and market reach.
+                </p>
               </div>
+            </div>
 
-              <div className="relative mt-5 min-h-[420px] overflow-hidden rounded-[36px] border border-[#D8E7F4] bg-[linear-gradient(180deg,#EAF6FF_0%,#DFF1FF_46%,#CFE8FF_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-                <svg
-                  viewBox="0 0 1200 760"
-                  className="absolute inset-0 h-full w-full"
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <radialGradient id="creator-map-atmosphere" cx="48%" cy="38%" r="66%">
-                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-                      <stop offset="42%" stopColor="#DDF2FF" stopOpacity="0.56" />
-                      <stop offset="100%" stopColor="#C8E8FF" stopOpacity="0.12" />
-                    </radialGradient>
-                    <radialGradient id="creator-map-ocean" cx="46%" cy="38%" r="66%">
-                      <stop offset="0%" stopColor="#79D4FF" />
-                      <stop offset="55%" stopColor="#4FB7F2" />
-                      <stop offset="100%" stopColor="#2A8FD6" />
-                    </radialGradient>
-                    <radialGradient id="creator-map-land" cx="46%" cy="38%" r="70%">
-                      <stop offset="0%" stopColor="#D9F7BE" />
-                      <stop offset="55%" stopColor="#B9E78E" />
-                      <stop offset="100%" stopColor="#7CCB66" />
-                    </radialGradient>
-                    <linearGradient id="creator-map-sand" x1="0%" x2="100%" y1="0%" y2="100%">
-                      <stop offset="0%" stopColor="#FFF4C2" />
-                      <stop offset="100%" stopColor="#F2D88D" />
-                    </linearGradient>
-                    <filter id="creator-map-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                      <feDropShadow dx="0" dy="26" stdDeviation="26" floodColor="#0F172A" floodOpacity="0.14" />
-                    </filter>
-                    <clipPath id="creator-earth-clip">
-                      <circle cx="470" cy="365" r="268" />
-                    </clipPath>
-                  </defs>
-                  <rect width="1200" height="760" fill="#EAF6FF" />
-                  <circle cx="470" cy="365" r="312" fill="url(#creator-map-atmosphere)" />
-                  <g filter="url(#creator-map-shadow)">
-                    <circle cx="470" cy="365" r="268" fill="url(#creator-map-ocean)" />
-                  </g>
-                  <g clipPath="url(#creator-earth-clip)">
-                    <path d="M164 249L214 220L281 231L330 266L322 311L279 339L229 331L182 292L164 249Z" fill="url(#creator-map-land)" />
-                    <path d="M231 356L276 373L299 413L292 477L266 532L228 508L217 456L221 401L231 356Z" fill="url(#creator-map-land)" />
-                    <path d="M420 203L492 187L566 205L612 244L606 288L565 310L515 300L472 271L420 203Z" fill="url(#creator-map-land)" />
-                    <path d="M476 286L541 294L585 333L592 388L561 445L509 452L470 418L456 357L476 286Z" fill="url(#creator-map-sand)" fillOpacity="0.95" />
-                    <path d="M598 204L681 191L747 214L785 257L782 301L744 326L697 322L653 299L598 204Z" fill="url(#creator-map-land)" />
-                    <path d="M676 309L722 314L758 341L762 381L735 398L698 391L668 360L676 309Z" fill="url(#creator-map-sand)" />
-                    <path d="M738 423L794 431L832 457L825 493L788 504L747 482L733 448L738 423Z" fill="url(#creator-map-land)" />
-                    <path d="M331 162L385 150L438 160" stroke="rgba(255,255,255,0.35)" strokeLinecap="round" strokeWidth="4" />
-                    <path d="M265 214C340 190 425 178 520 180" stroke="rgba(255,255,255,0.28)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                    <path d="M228 320C349 291 515 286 692 306" stroke="rgba(255,255,255,0.28)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                    <path d="M246 408C367 383 525 383 711 411" stroke="rgba(255,255,255,0.24)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                    <path d="M293 494C395 472 542 470 719 492" stroke="rgba(255,255,255,0.24)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                  </g>
-                  <circle cx="470" cy="365" r="268" fill="none" stroke="rgba(255,255,255,0.72)" strokeWidth="2" />
-                  <circle cx="470" cy="365" r="268" fill="none" stroke="rgba(20,98,165,0.16)" strokeWidth="6" />
-                  <g opacity="0.42" fill="none" stroke="rgba(255,255,255,0.55)">
-                    <ellipse cx="470" cy="365" rx="256" ry="80" />
-                    <ellipse cx="470" cy="365" rx="256" ry="138" />
-                    <ellipse cx="470" cy="365" rx="256" ry="198" />
-                    <path d="M214 365H726" />
-                    <path d="M238 300H706" />
-                    <path d="M238 430H706" />
-                    <path d="M314 205C354 282 354 448 314 525" />
-                    <path d="M628 205C588 282 588 448 628 525" />
-                  </g>
-                </svg>
+            <div className="relative mt-5 min-h-[420px] overflow-hidden rounded-[40px] border border-[#D7E7F7] bg-[linear-gradient(180deg,#F6FBFF_0%,#EAF6FF_38%,#D7EBF9_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:min-h-[500px]">
+              <svg
+                viewBox="0 0 1200 760"
+                className="absolute inset-0 h-full w-full"
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="map-atmosphere" cx="50%" cy="42%" r="66%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
+                    <stop offset="55%" stopColor="#D9EEF9" stopOpacity="0.42" />
+                    <stop offset="100%" stopColor="#C5E2F5" stopOpacity="0.08" />
+                  </radialGradient>
+                  <radialGradient id="map-ocean" cx="44%" cy="36%" r="68%">
+                    <stop offset="0%" stopColor="#87D4FF" />
+                    <stop offset="55%" stopColor="#4EB3F1" />
+                    <stop offset="100%" stopColor="#2F8CD8" />
+                  </radialGradient>
+                  <radialGradient id="map-land" cx="46%" cy="38%" r="72%">
+                    <stop offset="0%" stopColor="#DDF7BD" />
+                    <stop offset="56%" stopColor="#BCEB93" />
+                    <stop offset="100%" stopColor="#7BCC66" />
+                  </radialGradient>
+                  <filter id="map-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="24" stdDeviation="24" floodColor="#0F172A" floodOpacity="0.12" />
+                  </filter>
+                  <clipPath id="map-clip">
+                    <circle cx="520" cy="350" r="275" />
+                  </clipPath>
+                </defs>
+                <rect width="1200" height="760" fill="#EAF6FF" />
+                <circle cx="520" cy="350" r="320" fill="url(#map-atmosphere)" />
+                <g filter="url(#map-shadow)">
+                  <circle cx="520" cy="350" r="275" fill="url(#map-ocean)" />
+                </g>
+                <g clipPath="url(#map-clip)">
+                  <path d="M185 250L240 222L306 233L356 266L348 310L306 336L248 330L201 294L185 250Z" fill="url(#map-land)" />
+                  <path d="M240 365L285 380L308 420L301 478L271 533L237 512L226 457L231 404L240 365Z" fill="url(#map-land)" />
+                  <path d="M414 206L488 189L565 206L612 246L606 290L565 312L517 303L474 273L414 206Z" fill="url(#map-land)" />
+                  <path d="M475 287L542 294L586 334L593 389L561 446L510 452L471 419L457 358L475 287Z" fill="#F4F2DD" />
+                  <path d="M602 206L684 193L750 216L788 258L785 302L747 327L700 322L656 300L602 206Z" fill="url(#map-land)" />
+                  <path d="M682 310L726 314L760 341L764 380L738 398L701 391L671 360L682 310Z" fill="#F5F0C8" />
+                  <path d="M738 423L794 431L833 457L826 494L790 505L748 483L734 449L738 423Z" fill="url(#map-land)" />
+                  <path d="M318 165L390 152L438 160" stroke="rgba(255,255,255,0.42)" strokeLinecap="round" strokeWidth="4" />
+                  <path d="M266 215C341 192 426 179 522 181" stroke="rgba(255,255,255,0.28)" strokeLinecap="round" strokeWidth="2" fill="none" />
+                  <path d="M228 321C349 292 515 287 693 307" stroke="rgba(255,255,255,0.28)" strokeLinecap="round" strokeWidth="2" fill="none" />
+                  <path d="M247 409C368 384 526 384 712 412" stroke="rgba(255,255,255,0.24)" strokeLinecap="round" strokeWidth="2" fill="none" />
+                  <path d="M294 495C396 473 543 471 720 493" stroke="rgba(255,255,255,0.24)" strokeLinecap="round" strokeWidth="2" fill="none" />
+                </g>
+                <circle cx="520" cy="350" r="275" fill="none" stroke="rgba(255,255,255,0.78)" strokeWidth="2" />
+                <circle cx="520" cy="350" r="275" fill="none" stroke="rgba(15,118,190,0.14)" strokeWidth="6" />
+                <g opacity="0.3" fill="none" stroke="rgba(255,255,255,0.56)">
+                  <ellipse cx="520" cy="350" rx="264" ry="84" />
+                  <ellipse cx="520" cy="350" rx="264" ry="146" />
+                  <ellipse cx="520" cy="350" rx="264" ry="206" />
+                  <path d="M256 350H784" />
+                  <path d="M284 286H754" />
+                  <path d="M284 414H754" />
+                  <path d="M346 205C388 280 388 420 346 495" />
+                  <path d="M694 205C652 280 652 420 694 495" />
+                </g>
+              </svg>
 
-                <div className="absolute left-5 top-5 rounded-full border border-white/65 bg-white/80 px-3 py-2 text-xs font-medium text-[#334155] shadow-[0_14px_30px_rgba(15,23,42,0.08)] backdrop-blur-md">
-                  {pick({ zh: "Creator World Map", en: "Creator World Map" })}
-                </div>
-                <div className="absolute bottom-5 left-5 rounded-full border border-white/65 bg-white/80 px-3 py-2 text-xs font-medium text-[#334155] shadow-[0_14px_30px_rgba(15,23,42,0.08)] backdrop-blur-md">
-                  {pick({ zh: "点击圆点查看对应国家达人库", en: "Click a node to open the country creator list" })}
-                </div>
-
-                {worldRegionStats.map((region) => {
-                  const active = region.count > 0;
-                  const size = active ? 44 + Math.round((region.count / maxRegionCount) * 12) : 38;
-
-                  return (
-                    <Link
-                      key={region.code}
-                      href={region.href}
-                      title={`${region.code} · ${region.count} creators`}
-                      className="group absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                      style={{ top: region.top, left: region.left }}
+              {worldRegionStats.map((region) => {
+                const active = region.count > 0;
+                const size = active ? 42 + Math.round((region.count / maxRegionCount) * 10) : 36;
+                return (
+                  <Link
+                    key={region.code}
+                    href={region.href}
+                    title={`${region.code} · ${region.count} creators`}
+                    className="group absolute z-10 -translate-x-1/2 -translate-y-1/2"
+                    style={{ top: region.top, left: region.left }}
+                  >
+                    <span
+                      className={[
+                        "flex items-center justify-center rounded-full border text-sm font-semibold transition duration-200",
+                        active
+                          ? "border-white/80 text-white shadow-[0_0_0_10px_rgba(255,255,255,0.22),0_0_20px_rgba(59,130,246,0.18)] group-hover:-translate-y-1"
+                          : "border-white/80 bg-white/65 text-[#64748B] group-hover:-translate-y-1",
+                      ].join(" ")}
+                      style={{
+                        width: `${size}px`,
+                        height: `${size}px`,
+                        background: active ? region.accent : "rgba(255,255,255,0.72)",
+                      }}
                     >
-                      <span
-                        className={[
-                          "flex items-center justify-center rounded-full border text-sm font-semibold transition duration-200",
-                          active
-                            ? "border-white/80 text-white shadow-[0_0_0_10px_rgba(255,255,255,0.24),0_0_26px_rgba(59,130,246,0.2)] group-hover:-translate-y-1"
-                            : "border-white/80 bg-white/65 text-[#64748B] group-hover:-translate-y-1",
-                        ].join(" ")}
-                        style={{
-                          width: `${size}px`,
-                          height: `${size}px`,
-                          background: active ? region.accent : "rgba(255,255,255,0.72)",
-                          boxShadow: active
-                            ? `0 0 0 10px rgba(255,255,255,0.24), 0 0 24px ${region.accent}55`
-                            : "0 0 0 10px rgba(255,255,255,0.18)",
-                        }}
-                      >
-                        {region.count}
-                      </span>
-                      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[#D7E7F7] bg-[#0F172A] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.28)] transition group-hover:opacity-100">
-                        <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{region.code}</span>
-                        <span className="block">{region.label}</span>
-                        <span className="block text-white/70">{region.count} creators</span>
-                      </span>
-                    </Link>
-                  );
-                })}
+                      {region.count}
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[#D7E7F7] bg-[#0F172A] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.28)] transition group-hover:opacity-100">
+                      <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{region.code}</span>
+                      <span className="block">{region.label}</span>
+                      <span className="block text-white/70">{region.count} creators</span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 rounded-[24px] border border-[#D7E7F7] bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur-md lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B7280]">
+                  Countries
+                </span>
+                {["US", "Korea", "UK", "Germany", "Singapore", "Malaysia"].map((country) => (
+                  <span
+                    key={country}
+                    className="rounded-full border border-[#D7E7F7] bg-[#F8FBFF] px-3 py-1 text-xs font-medium text-[#334155]"
+                  >
+                    {country}
+                  </span>
+                ))}
               </div>
-
-              <div className="space-y-3 p-5 sm:p-6">
-                <div className="rounded-[28px] border border-[#D7E7F7] bg-white p-4 shadow-[0_16px_36px_rgba(15,23,42,0.05)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B7280]">
-                    {pick({ zh: "Summary", en: "Summary" })}
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                    {[
-                      { label: pick({ zh: "达人总数", en: "Creators Total" }), value: totalCreators },
-                      { label: pick({ zh: "已寄样", en: "Samples Sent" }), value: samplesSentCount },
-                      { label: pick({ zh: "覆盖市场", en: "Markets Covered" }), value: globalReach },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-[22px] border border-[#E5E7EB] bg-[#F8FBFF] px-4 py-3">
-                        <p className="text-xs font-medium text-[#6B7280]">{item.label}</p>
-                        <p className="mt-2 text-3xl font-semibold leading-none text-[#111827]">{item.value}</p>
-                      </div>
-                    ))}
+              <div className="flex flex-wrap items-center gap-3">
+                {[
+                  { label: "Creators", value: totalCreators },
+                  { label: "Samples", value: samplesSentCount },
+                  { label: "Markets", value: globalReach },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-[#6B7280]">{item.label}</span>
+                    <span className="text-sm font-semibold text-[#111827]">{item.value}</span>
                   </div>
-                </div>
-
-                <div className="rounded-[28px] border border-[#D7E7F7] bg-white p-4 shadow-[0_16px_36px_rgba(15,23,42,0.05)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B7280]">
-                    {pick({ zh: "Network Notes", en: "Network Notes" })}
-                  </p>
-                  <div className="mt-4 space-y-3 text-sm text-[#475569]">
-                    <p>
-                      {pick({
-                        zh: "明亮的半球地图、彩色节点和悬浮标签，让全球创作者分布一眼可见。",
-                        en: "A bright hemisphere map with colorful nodes and floating labels makes global creator coverage instantly readable.",
-                      })}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        pick({ zh: "国家分布", en: "Country Distribution" }),
-                        pick({ zh: "已寄样", en: "Samples Sent" }),
-                        pick({ zh: "全球覆盖", en: "Global Reach" }),
-                      ].map((tag) => (
-                        <span key={tag} className="rounded-full border border-[#D7E7F7] bg-[#F8FBFF] px-3 py-1 text-xs font-medium text-[#475569]">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
