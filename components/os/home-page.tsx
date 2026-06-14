@@ -539,11 +539,14 @@ export function HomePage() {
               ))}
             </div>
 
-            <div className="absolute left-1/2 top-1/2 z-10 h-[700px] w-[min(1400px,calc(100%-1rem))] -translate-x-1/2 -translate-y-1/2 map-float">
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
               <div
-                className="absolute inset-0 origin-center transition-transform duration-300"
-                style={{ transform: `scale(${zoomLevel})` }}
+                className="relative h-[min(680px,calc(100%-3rem))] w-[min(1400px,calc(100%-1rem))] map-float"
               >
+                <div
+                  className="absolute inset-0 origin-center transition-transform duration-300"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                >
                 <svg
                   viewBox="0 0 1400 700"
                   className="absolute inset-0 h-full w-full"
@@ -697,6 +700,7 @@ export function HomePage() {
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           </div>
@@ -707,10 +711,10 @@ export function HomePage() {
         @keyframes mapFloat {
           0%,
           100% {
-            transform: translate(-50%, -50%) translateY(0px);
+            transform: translateY(0px);
           }
           50% {
-            transform: translate(-50%, -50%) translateY(-6px);
+            transform: translateY(-6px);
           }
         }
 
