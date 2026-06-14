@@ -37,10 +37,15 @@ export default function CreatorCrmPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [profileUrl, setProfileUrl] = useState("");
+  const countryFilter = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("country")?.trim().toLowerCase() ?? "";
+  }, []);
 
   const savedCreators = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return os.state.creators.filter((creator) => {
+      const creatorCountry = creator.country.trim().toLowerCase();
       const matchKeyword =
         !keyword ||
         [
@@ -56,9 +61,14 @@ export default function CreatorCrmPage() {
           .toLowerCase()
           .includes(keyword);
       const matchStatus = statusFilter === "all" || creator.status === statusFilter;
-      return matchKeyword && matchStatus;
+      const matchCountry =
+        !countryFilter ||
+        creatorCountry === countryFilter ||
+        creatorCountry.includes(countryFilter) ||
+        countryFilter.includes(creatorCountry);
+      return matchKeyword && matchStatus && matchCountry;
     });
-  }, [os.state.creators, search, statusFilter]);
+  }, [os.state.creators, search, statusFilter, countryFilter]);
 
   const handlePasteLink = () => {
     if (!profileUrl.trim()) return;
