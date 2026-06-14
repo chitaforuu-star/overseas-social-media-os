@@ -316,37 +316,20 @@ export function HomePage() {
         </div>
       }
     >
+
       <section className="space-y-4">
         <AppCard className="overflow-hidden border border-white/8 bg-[#0E131A] p-0 shadow-[0_36px_100px_rgba(0,0,0,0.34)]">
-          <div className="border-b border-white/5 px-5 py-4 sm:px-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/40">
-              {pick({ zh: "全球创作者网络", en: "Global Creator Network" })}
-            </p>
-            <h2 className="mt-2 text-lg font-semibold text-white sm:text-xl">
-              {pick({ zh: "跨市场达人覆盖", en: "Creator Coverage Across Markets" })}
-            </h2>
-            <p className="mt-1 text-sm text-white/50">
-              {pick({
-                zh: "追踪达人分布、寄样状态和市场覆盖。",
-                en: "Track creator distribution, samples and market reach.",
-              })}
-            </p>
-          </div>
+          <div className="relative min-h-[720px] overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(59,130,246,0.14),transparent_34%),radial-gradient(circle_at_24%_56%,rgba(139,92,246,0.1),transparent_22%),radial-gradient(circle_at_72%_58%,rgba(34,197,94,0.08),transparent_20%)]" />
 
-          <div className="relative min-h-[580px] overflow-hidden px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(59,130,246,0.12),transparent_36%),radial-gradient(circle_at_28%_52%,rgba(139,92,246,0.08),transparent_24%),radial-gradient(circle_at_72%_54%,rgba(34,197,94,0.06),transparent_22%)]" />
-
-            <aside className="absolute left-4 top-4 z-30 w-[220px] rounded-[24px] border border-white/8 bg-[#111720]/92 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <aside className="absolute left-8 top-8 z-40 w-[260px] rounded-[22px] border border-white/10 bg-[#111720]/92 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
                 <Filter className="h-4 w-4 text-white/55" />
                 {pick({ zh: "筛选", en: "Filters" })}
               </div>
-
-              <div className="mt-4 space-y-4">
+              <div className="mt-3 space-y-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                    {pick({ zh: "Platform", en: "Platform" })}
-                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Platform</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {mapPlatformOptions.map((option) => {
                       const selected = platformFilter === option;
@@ -356,7 +339,7 @@ export function HomePage() {
                           type="button"
                           onClick={() => setPlatformFilter(option)}
                           className={[
-                            "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                            "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
                             selected
                               ? "border-white/15 bg-white text-[#0E131A]"
                               : "border-white/10 bg-white/5 text-white/72 hover:bg-white/10",
@@ -370,9 +353,7 @@ export function HomePage() {
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                    {pick({ zh: "Market", en: "Market" })}
-                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Market</p>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     {mapMarketOptions.map((option) => {
                       const selected = marketFilter === option;
@@ -382,7 +363,7 @@ export function HomePage() {
                           type="button"
                           onClick={() => setMarketFilter(option)}
                           className={[
-                            "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                            "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
                             selected
                               ? "border-white/15 bg-white text-[#0E131A]"
                               : "border-white/10 bg-white/5 text-white/72 hover:bg-white/10",
@@ -396,9 +377,7 @@ export function HomePage() {
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                    {pick({ zh: "Status", en: "Status" })}
-                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Status</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {mapStatusOptions.map((option) => {
                       const selected = statusFilter === option;
@@ -417,7 +396,7 @@ export function HomePage() {
                           type="button"
                           onClick={() => setStatusFilter(option)}
                           className={[
-                            "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                            "rounded-full border px-2.5 py-1 text-[10px] font-medium transition",
                             selected ? "text-white" : "text-white/72 hover:bg-white/10",
                           ].join(" ")}
                           style={{
@@ -449,79 +428,102 @@ export function HomePage() {
               </div>
             </aside>
 
-            <div className="absolute right-4 top-1/2 z-30 w-[320px] -translate-y-1/2">
-              <div className="rounded-[24px] border border-white/8 bg-[#111720]/92 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/38">
-                      {pick({ zh: "Country", en: "Country" })}
-                    </p>
-                    <h3 className="mt-1 text-lg font-semibold text-white">{activeRegion.label}</h3>
-                  </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70">
-                    {activeRegion.count}
-                  </span>
-                </div>
-
-                <div className="mt-4 grid gap-2">
-                  {[
-                    { label: pick({ zh: "Total Creators", en: "Total Creators" }), value: activeRegion.count },
-                    { label: pick({ zh: "Contacted", en: "Contacted" }), value: activeRegion.statusTotals.contacted },
-                    { label: pick({ zh: "Replied", en: "Replied" }), value: activeRegion.statusTotals.replied },
-                    { label: pick({ zh: "Samples Sent", en: "Samples Sent" }), value: activeRegion.statusTotals.sample_sent },
-                    { label: pick({ zh: "Posted Content", en: "Posted Content" }), value: activeRegion.statusTotals.posted },
-                    { label: pick({ zh: "Top Platform", en: "Top Platform" }), value: activeRegion.topPlatform },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/4 px-3 py-2 text-sm">
-                      <span className="text-white/50">{item.label}</span>
-                      <span className="font-medium text-white">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href={activeRegion.href}
-                  className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-[#0E131A] transition hover:bg-[#F3F4F6]"
+            <div className="absolute right-7 top-1/2 z-40 -translate-y-1/2">
+              <div className="flex flex-col gap-2 rounded-full border border-white/10 bg-[#111720]/92 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((value) => Math.min(1.3, Number((value + 0.1).toFixed(2))))}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/5 text-white/85 transition hover:bg-white/10"
                 >
-                  {pick({ zh: "查看达人", en: "View Creators" })}
-                </Link>
+                  <Plus className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((value) => Math.max(0.85, Number((value - 0.1).toFixed(2))))}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/5 text-white/85 transition hover:bg-white/10"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(1)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/5 text-white/85 transition hover:bg-white/10"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
-            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/8 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-              {Object.entries(mapStatusStyles).map(([key, config]) => (
-                <span key={key} className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/78">
+            <div className="absolute right-8 top-8 z-40 w-[320px] rounded-[24px] border border-white/10 bg-[#111720]/92 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/38">Country</p>
+                  <h3 className="mt-1 text-lg font-semibold text-white">{activeRegion.label}</h3>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70">
+                  {activeRegion.count}
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                {[
+                  { label: "Creators", value: activeRegion.count },
+                  { label: "Contacted", value: activeRegion.statusTotals.contacted },
+                  { label: "Replied", value: activeRegion.statusTotals.replied },
+                  { label: "Samples", value: activeRegion.statusTotals.sample_sent },
+                  { label: "Posted", value: activeRegion.statusTotals.posted },
+                  { label: "Top Platform", value: activeRegion.topPlatform },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-sm"
+                  >
+                    <span className="text-white/50">{item.label}</span>
+                    <span className="font-medium text-white">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href={activeRegion.href}
+                className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-[#0E131A] transition hover:bg-[#F3F4F6]"
+              >
+                {pick({ zh: "View Creators", en: "View Creators" })}
+              </Link>
+            </div>
+
+            <div className="absolute bottom-7 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+              {Object.values(mapStatusStyles).map((config) => (
+                <span
+                  key={config.label}
+                  className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/78"
+                >
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: config.color }} />
                   {config.label}
                 </span>
               ))}
             </div>
 
-            <div className="absolute bottom-4 right-4 z-30 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setZoomLevel((value) => Math.min(1.3, Number((value + 0.1).toFixed(2))))}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[#111720]/92 text-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-white/10"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setZoomLevel((value) => Math.max(0.85, Number((value - 0.1).toFixed(2))))}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[#111720]/92 text-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-white/10"
-              >
-                <ZoomOut className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setZoomLevel(1)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[#111720]/92 text-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-white/10"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </button>
+            <div className="absolute bottom-7 left-7 z-30 rounded-[20px] border border-white/10 bg-[#111720]/92 px-4 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                  Summary
+                </span>
+                {[
+                  { label: "Creators", value: totalFilteredCreators },
+                  { label: "Samples", value: filteredSamplesSentCount },
+                  { label: "Markets", value: filteredMarketCount },
+                  { label: "Posted", value: filteredPostedCount },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className="text-xs text-white/45">{item.label}</span>
+                    <span className="text-sm font-semibold text-white">{item.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="absolute left-1/2 top-1/2 z-10 h-[520px] w-[min(1240px,calc(100%-18rem))] -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-1/2 z-10 h-[700px] w-[min(1400px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2">
               <div
                 className="absolute inset-0 origin-center transition-transform duration-300"
                 style={{ transform: `scale(${zoomLevel})` }}
@@ -607,9 +609,13 @@ export function HomePage() {
                           style={{
                             background: statusColor,
                             boxShadow: `0 0 0 5px ${statusTint}`,
+                            opacity: active ? 1 : 0.35,
                           }}
                         />
-                        <span className="min-w-8 rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white/90">
+                        <span
+                          className="min-w-8 rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white/90"
+                          style={{ opacity: active ? 1 : 0.45 }}
+                        >
                           {region.count}
                         </span>
                       </span>
@@ -618,42 +624,12 @@ export function HomePage() {
                 })}
               </div>
             </div>
-
-            <div className="absolute bottom-4 left-4 z-30 rounded-[22px] border border-white/8 bg-[#111720]/92 px-4 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                  {pick({ zh: "Summary", en: "Summary" })}
-                </span>
-                {[
-                  { label: pick({ zh: "Creators", en: "Creators" }), value: totalFilteredCreators },
-                  { label: pick({ zh: "Samples", en: "Samples" }), value: filteredSamplesSentCount },
-                  { label: pick({ zh: "Markets", en: "Markets" }), value: filteredMarketCount },
-                  { label: pick({ zh: "Posted", en: "Posted" }), value: filteredPostedCount },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    <span className="text-xs text-white/45">{item.label}</span>
-                    <span className="text-sm font-semibold text-white">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/8 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-              {Object.values(mapStatusStyles).map((config) => (
-                <span
-                  key={config.label}
-                  className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/78"
-                >
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: config.color }} />
-                  {config.label}
-                </span>
-              ))}
-            </div>
           </div>
         </AppCard>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
         <MetricCard
           label={pick(copy.dashboard.metrics.creators)}
           value={creatorsInPipeline}
