@@ -1,16 +1,19 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   BarChart3,
+  Filter,
   FolderKanban,
   Megaphone,
   Package,
   Plus,
+  RotateCcw,
   Sparkles,
   Users,
+  ZoomOut,
   WandSparkles,
 } from "lucide-react";
 import { useLanguage } from "@/components/os/language-context";
@@ -84,8 +87,8 @@ const worldRegions: WorldRegion[] = [
     label: "US",
     aliases: ["us", "usa", "united states", "united states of america"],
     href: "/creator-crm?country=US",
-    top: "44%",
-    left: "25%",
+    top: "47%",
+    left: "22%",
     accent: "#FB7185",
   },
   {
@@ -93,8 +96,8 @@ const worldRegions: WorldRegion[] = [
     label: "UK",
     aliases: ["uk", "united kingdom", "great britain", "britain", "england"],
     href: "/creator-crm?country=UK",
-    top: "28%",
-    left: "43%",
+    top: "30%",
+    left: "49%",
     accent: "#8B5CF6",
   },
   {
@@ -102,8 +105,8 @@ const worldRegions: WorldRegion[] = [
     label: "DE",
     aliases: ["germany", "de", "deutschland"],
     href: "/creator-crm?country=Germany",
-    top: "32%",
-    left: "47%",
+    top: "33%",
+    left: "52%",
     accent: "#22C55E",
   },
   {
@@ -111,8 +114,8 @@ const worldRegions: WorldRegion[] = [
     label: "KR",
     aliases: ["korea", "south korea", "republic of korea", "kr"],
     href: "/creator-crm?country=Korea",
-    top: "39%",
-    left: "72%",
+    top: "37%",
+    left: "79%",
     accent: "#F59E0B",
   },
   {
@@ -121,7 +124,7 @@ const worldRegions: WorldRegion[] = [
     aliases: ["singapore", "sg"],
     href: "/creator-crm?country=Singapore",
     top: "61%",
-    left: "69%",
+    left: "74%",
     accent: "#06B6D4",
   },
   {
@@ -129,11 +132,23 @@ const worldRegions: WorldRegion[] = [
     label: "MY",
     aliases: ["malaysia", "my"],
     href: "/creator-crm?country=Malaysia",
-    top: "65%",
-    left: "66%",
+    top: "64%",
+    left: "71%",
     accent: "#A855F7",
   },
 ];
+
+const mapStatusStyles: Record<string, { label: string; color: string; tint: string }> = {
+  new: { label: "New", color: "#3B82F6", tint: "rgba(59,130,246,0.18)" },
+  contacted: { label: "Contacted", color: "#8B5CF6", tint: "rgba(139,92,246,0.18)" },
+  replied: { label: "Replied", color: "#22C55E", tint: "rgba(34,197,94,0.18)" },
+  sample_sent: { label: "Sample Sent", color: "#F59E0B", tint: "rgba(245,158,11,0.18)" },
+  posted: { label: "Posted", color: "#EC4899", tint: "rgba(236,72,153,0.18)" },
+};
+
+const mapPlatformOptions = ["All", "TikTok", "Instagram", "YouTube"] as const;
+const mapMarketOptions = ["All", "US", "UK", "Korea", "Germany", "Singapore", "Malaysia"] as const;
+const mapStatusOptions = ["All", "New", "Contacted", "Replied", "Sample Sent", "Posted"] as const;
 
 function normalizeCountry(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -154,20 +169,15 @@ function countryMatches(country: string, aliases: string[]) {
 export function HomePage() {
   const { pick } = useLanguage();
   const os = useOS();
-  const countryDistribution = useMemo(() => {
-    const counts = new Map<string, number>();
-    os.state.creators.forEach((creator) => {
-      const key = creator.country?.trim() || "Unknown";
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    });
-    return [...counts.entries()]
-      .map(([country, count]) => ({ country, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [os.state.creators]);
+  const [platformFilter, setPlatformFilter] = useState<(typeof mapPlatformOptions)[number]>("All");
+  const [marketFilter, setMarketFilter] = useState<(typeof mapMarketOptions)[number]>("All");
+  const [statusFilter, setStatusFilter] = useState<(typeof mapStatusOptions)[number]>("All");
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [hoveredRegion, setHoveredRegion] = useState<(typeof worldRegions)[number]["code"] | null>(
+    null,
+  );
 
-  const totalCreators = os.state.creators.length;
   const samplesSentCount = os.state.creators.filter((creator) => creator.status === "sample_sent").length;
-  const globalReach = countryDistribution.length;
 
   const creatorsInPipeline = os.state.creators.filter(
     (creator) => creator.status !== "reviewed",
@@ -179,18 +189,80 @@ export function HomePage() {
   const worldRegionStats = useMemo(
     () =>
       worldRegions.map((region) => {
-        const count = os.state.creators.filter((creator) =>
+        const creatorsInCountry = os.state.creators.filter((creator) =>
           countryMatches(creator.country ?? "", region.aliases),
-        ).length;
+        );
+        const filteredCreators = creatorsInCountry.filter((creator) => {
+          const platformMatch =
+            platformFilter === "All" || matchText(creator.platform, platformFilter);
+          const marketMatch = marketFilter === "All" || region.code === marketFilter;
+          const statusMatch = matchesStatusFilter(creator.status, statusFilter);
+          return platformMatch && marketMatch && statusMatch;
+        });
+        const visibleCount = filteredCreators.length;
+        const statusTotals = filteredCreators.reduce(
+          (acc, creator) => {
+            const status = creator.status;
+            if (status === "new") acc.new += 1;
+            if (status === "contacted") acc.contacted += 1;
+            if (status === "replied") acc.replied += 1;
+            if (status === "sample_sent") acc.sample_sent += 1;
+            if (status === "posted") acc.posted += 1;
+            return acc;
+          },
+          { new: 0, contacted: 0, replied: 0, sample_sent: 0, posted: 0 },
+        );
+        const platformTotals = filteredCreators.reduce(
+          (acc, creator) => {
+            const platform = creator.platform.trim() || "Unknown";
+            acc.set(platform, (acc.get(platform) ?? 0) + 1);
+            return acc;
+          },
+          new Map<string, number>(),
+        );
+        const topPlatform =
+          [...platformTotals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+        const topStatusKey =
+          Object.entries(statusTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "new";
 
         return {
           ...region,
-          count,
+          count: visibleCount,
+          statusTotals,
+          topPlatform,
+          topStatusKey,
+          filteredCreators,
         };
       }),
-    [os.state.creators],
+    [marketFilter, os.state.creators, platformFilter, statusFilter],
   );
-  const maxRegionCount = Math.max(1, ...worldRegionStats.map((region) => region.count));
+  const visibleCreators = useMemo(
+    () =>
+      os.state.creators.filter((creator) => {
+        const platformMatch =
+          platformFilter === "All" || matchText(creator.platform, platformFilter);
+        const statusMatch = matchesStatusFilter(creator.status, statusFilter);
+        const marketMatch =
+          marketFilter === "All" ||
+          worldRegions.some(
+            (region) =>
+              region.code === marketFilter &&
+              countryMatches(creator.country ?? "", region.aliases),
+          );
+        return platformMatch && statusMatch && marketMatch;
+      }),
+    [marketFilter, os.state.creators, platformFilter, statusFilter],
+  );
+  const activeRegionCode =
+    hoveredRegion ?? worldRegionStats.find((region) => region.count > 0)?.code ?? "US";
+  const activeRegion =
+    (worldRegionStats.find((region) => region.code === activeRegionCode) ??
+      worldRegionStats[0] ??
+      worldRegions[0]) as (typeof worldRegionStats)[number];
+  const filteredMarketCount = worldRegionStats.filter((region) => region.count > 0).length;
+  const totalFilteredCreators = visibleCreators.length;
+  const filteredSamplesSentCount = visibleCreators.filter((creator) => creator.status === "sample_sent").length;
+  const filteredPostedCount = visibleCreators.filter((creator) => creator.status === "posted").length;
 
   const tasks: FocusTask[] = [
     {
@@ -245,146 +317,337 @@ export function HomePage() {
       }
     >
       <section className="space-y-4">
-        <AppCard className="overflow-hidden border-[#D7E7F7] bg-[#F8FBFF] p-0 shadow-[0_28px_70px_rgba(15,23,42,0.06)]">
-          <div className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6B7280]">
-                  Global Creator Network
-                </p>
-                <p className="mt-2 text-sm text-[#6B7280]">
-                  Creator Coverage Across Markets
-                </p>
-                <p className="mt-2 text-sm text-[#6B7280]">
-                  Track creator distribution, samples and market reach.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative mt-5 min-h-[420px] overflow-hidden rounded-[40px] border border-[#D7E7F7] bg-[linear-gradient(180deg,#F6FBFF_0%,#EAF6FF_38%,#D7EBF9_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:min-h-[500px]">
-              <svg
-                viewBox="0 0 1200 760"
-                className="absolute inset-0 h-full w-full"
-                aria-hidden="true"
-              >
-                <defs>
-                  <radialGradient id="map-atmosphere" cx="50%" cy="42%" r="66%">
-                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-                    <stop offset="55%" stopColor="#D9EEF9" stopOpacity="0.42" />
-                    <stop offset="100%" stopColor="#C5E2F5" stopOpacity="0.08" />
-                  </radialGradient>
-                  <radialGradient id="map-ocean" cx="44%" cy="36%" r="68%">
-                    <stop offset="0%" stopColor="#87D4FF" />
-                    <stop offset="55%" stopColor="#4EB3F1" />
-                    <stop offset="100%" stopColor="#2F8CD8" />
-                  </radialGradient>
-                  <radialGradient id="map-land" cx="46%" cy="38%" r="72%">
-                    <stop offset="0%" stopColor="#DDF7BD" />
-                    <stop offset="56%" stopColor="#BCEB93" />
-                    <stop offset="100%" stopColor="#7BCC66" />
-                  </radialGradient>
-                  <filter id="map-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="24" stdDeviation="24" floodColor="#0F172A" floodOpacity="0.12" />
-                  </filter>
-                  <clipPath id="map-clip">
-                    <circle cx="520" cy="350" r="275" />
-                  </clipPath>
-                </defs>
-                <rect width="1200" height="760" fill="#EAF6FF" />
-                <circle cx="520" cy="350" r="320" fill="url(#map-atmosphere)" />
-                <g filter="url(#map-shadow)">
-                  <circle cx="520" cy="350" r="275" fill="url(#map-ocean)" />
-                </g>
-                <g clipPath="url(#map-clip)">
-                  <path d="M185 250L240 222L306 233L356 266L348 310L306 336L248 330L201 294L185 250Z" fill="url(#map-land)" />
-                  <path d="M240 365L285 380L308 420L301 478L271 533L237 512L226 457L231 404L240 365Z" fill="url(#map-land)" />
-                  <path d="M414 206L488 189L565 206L612 246L606 290L565 312L517 303L474 273L414 206Z" fill="url(#map-land)" />
-                  <path d="M475 287L542 294L586 334L593 389L561 446L510 452L471 419L457 358L475 287Z" fill="#F4F2DD" />
-                  <path d="M602 206L684 193L750 216L788 258L785 302L747 327L700 322L656 300L602 206Z" fill="url(#map-land)" />
-                  <path d="M682 310L726 314L760 341L764 380L738 398L701 391L671 360L682 310Z" fill="#F5F0C8" />
-                  <path d="M738 423L794 431L833 457L826 494L790 505L748 483L734 449L738 423Z" fill="url(#map-land)" />
-                  <path d="M318 165L390 152L438 160" stroke="rgba(255,255,255,0.42)" strokeLinecap="round" strokeWidth="4" />
-                  <path d="M266 215C341 192 426 179 522 181" stroke="rgba(255,255,255,0.28)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                  <path d="M228 321C349 292 515 287 693 307" stroke="rgba(255,255,255,0.28)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                  <path d="M247 409C368 384 526 384 712 412" stroke="rgba(255,255,255,0.24)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                  <path d="M294 495C396 473 543 471 720 493" stroke="rgba(255,255,255,0.24)" strokeLinecap="round" strokeWidth="2" fill="none" />
-                </g>
-                <circle cx="520" cy="350" r="275" fill="none" stroke="rgba(255,255,255,0.78)" strokeWidth="2" />
-                <circle cx="520" cy="350" r="275" fill="none" stroke="rgba(15,118,190,0.14)" strokeWidth="6" />
-                <g opacity="0.3" fill="none" stroke="rgba(255,255,255,0.56)">
-                  <ellipse cx="520" cy="350" rx="264" ry="84" />
-                  <ellipse cx="520" cy="350" rx="264" ry="146" />
-                  <ellipse cx="520" cy="350" rx="264" ry="206" />
-                  <path d="M256 350H784" />
-                  <path d="M284 286H754" />
-                  <path d="M284 414H754" />
-                  <path d="M346 205C388 280 388 420 346 495" />
-                  <path d="M694 205C652 280 652 420 694 495" />
-                </g>
-              </svg>
-
-              {worldRegionStats.map((region) => {
-                const active = region.count > 0;
-                const size = active ? 42 + Math.round((region.count / maxRegionCount) * 10) : 36;
-                return (
-                  <Link
-                    key={region.code}
-                    href={region.href}
-                    title={`${region.code} · ${region.count} creators`}
-                    className="group absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                    style={{ top: region.top, left: region.left }}
-                  >
-                    <span
-                      className={[
-                        "flex items-center justify-center rounded-full border text-sm font-semibold transition duration-200",
-                        active
-                          ? "border-white/80 text-white shadow-[0_0_0_10px_rgba(255,255,255,0.22),0_0_20px_rgba(59,130,246,0.18)] group-hover:-translate-y-1"
-                          : "border-white/80 bg-white/65 text-[#64748B] group-hover:-translate-y-1",
-                      ].join(" ")}
-                      style={{
-                        width: `${size}px`,
-                        height: `${size}px`,
-                        background: active ? region.accent : "rgba(255,255,255,0.72)",
-                      }}
-                    >
-                      {region.count}
-                    </span>
-                    <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[#D7E7F7] bg-[#0F172A] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-[0_16px_40px_rgba(15,23,42,0.28)] transition group-hover:opacity-100">
-                      <span className="block text-[10px] uppercase tracking-[0.18em] text-white/45">{region.code}</span>
-                      <span className="block">{region.label}</span>
-                      <span className="block text-white/70">{region.count} creators</span>
-                    </span>
-                  </Link>
-                );
+        <AppCard className="overflow-hidden border border-white/8 bg-[#0E131A] p-0 shadow-[0_36px_100px_rgba(0,0,0,0.34)]">
+          <div className="border-b border-white/5 px-5 py-4 sm:px-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/40">
+              {pick({ zh: "全球创作者网络", en: "Global Creator Network" })}
+            </p>
+            <h2 className="mt-2 text-lg font-semibold text-white sm:text-xl">
+              {pick({ zh: "跨市场达人覆盖", en: "Creator Coverage Across Markets" })}
+            </h2>
+            <p className="mt-1 text-sm text-white/50">
+              {pick({
+                zh: "追踪达人分布、寄样状态和市场覆盖。",
+                en: "Track creator distribution, samples and market reach.",
               })}
+            </p>
+          </div>
+
+          <div className="relative min-h-[580px] overflow-hidden px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(59,130,246,0.12),transparent_36%),radial-gradient(circle_at_28%_52%,rgba(139,92,246,0.08),transparent_24%),radial-gradient(circle_at_72%_54%,rgba(34,197,94,0.06),transparent_22%)]" />
+
+            <aside className="absolute left-4 top-4 z-30 w-[220px] rounded-[24px] border border-white/8 bg-[#111720]/92 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+                <Filter className="h-4 w-4 text-white/55" />
+                {pick({ zh: "筛选", en: "Filters" })}
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                    {pick({ zh: "Platform", en: "Platform" })}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {mapPlatformOptions.map((option) => {
+                      const selected = platformFilter === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setPlatformFilter(option)}
+                          className={[
+                            "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                            selected
+                              ? "border-white/15 bg-white text-[#0E131A]"
+                              : "border-white/10 bg-white/5 text-white/72 hover:bg-white/10",
+                          ].join(" ")}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                    {pick({ zh: "Market", en: "Market" })}
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {mapMarketOptions.map((option) => {
+                      const selected = marketFilter === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setMarketFilter(option)}
+                          className={[
+                            "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                            selected
+                              ? "border-white/15 bg-white text-[#0E131A]"
+                              : "border-white/10 bg-white/5 text-white/72 hover:bg-white/10",
+                          ].join(" ")}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                    {pick({ zh: "Status", en: "Status" })}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {mapStatusOptions.map((option) => {
+                      const selected = statusFilter === option;
+                      const statusKey =
+                        option === "All"
+                          ? "new"
+                          : option === "Sample Sent"
+                            ? "sample_sent"
+                            : option === "Posted"
+                              ? "posted"
+                              : normalizeText(option);
+                      const tint = mapStatusStyles[statusKey]?.tint ?? "rgba(255,255,255,0.08)";
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setStatusFilter(option)}
+                          className={[
+                            "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                            selected ? "text-white" : "text-white/72 hover:bg-white/10",
+                          ].join(" ")}
+                          style={{
+                            borderColor: selected ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.10)",
+                            background: selected ? tint : "rgba(255,255,255,0.05)",
+                          }}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlatformFilter("All");
+                    setMarketFilter("All");
+                    setStatusFilter("All");
+                    setZoomLevel(1);
+                    setHoveredRegion(null);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/70 transition hover:bg-white/10"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {pick({ zh: "重置", en: "Reset" })}
+                </button>
+              </div>
+            </aside>
+
+            <div className="absolute right-4 top-1/2 z-30 w-[320px] -translate-y-1/2">
+              <div className="rounded-[24px] border border-white/8 bg-[#111720]/92 p-4 text-white shadow-[0_20px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/38">
+                      {pick({ zh: "Country", en: "Country" })}
+                    </p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">{activeRegion.label}</h3>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70">
+                    {activeRegion.count}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-2">
+                  {[
+                    { label: pick({ zh: "Total Creators", en: "Total Creators" }), value: activeRegion.count },
+                    { label: pick({ zh: "Contacted", en: "Contacted" }), value: activeRegion.statusTotals.contacted },
+                    { label: pick({ zh: "Replied", en: "Replied" }), value: activeRegion.statusTotals.replied },
+                    { label: pick({ zh: "Samples Sent", en: "Samples Sent" }), value: activeRegion.statusTotals.sample_sent },
+                    { label: pick({ zh: "Posted Content", en: "Posted Content" }), value: activeRegion.statusTotals.posted },
+                    { label: pick({ zh: "Top Platform", en: "Top Platform" }), value: activeRegion.topPlatform },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/4 px-3 py-2 text-sm">
+                      <span className="text-white/50">{item.label}</span>
+                      <span className="font-medium text-white">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href={activeRegion.href}
+                  className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-[#0E131A] transition hover:bg-[#F3F4F6]"
+                >
+                  {pick({ zh: "查看达人", en: "View Creators" })}
+                </Link>
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 rounded-[24px] border border-[#D7E7F7] bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur-md lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B7280]">
-                  Countries
+            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/8 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+              {Object.entries(mapStatusStyles).map(([key, config]) => (
+                <span key={key} className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/78">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: config.color }} />
+                  {config.label}
                 </span>
-                {["US", "Korea", "UK", "Germany", "Singapore", "Malaysia"].map((country) => (
-                  <span
-                    key={country}
-                    className="rounded-full border border-[#D7E7F7] bg-[#F8FBFF] px-3 py-1 text-xs font-medium text-[#334155]"
-                  >
-                    {country}
-                  </span>
-                ))}
+              ))}
+            </div>
+
+            <div className="absolute bottom-4 right-4 z-30 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setZoomLevel((value) => Math.min(1.3, Number((value + 0.1).toFixed(2))))}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[#111720]/92 text-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-white/10"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomLevel((value) => Math.max(0.85, Number((value - 0.1).toFixed(2))))}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[#111720]/92 text-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-white/10"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomLevel(1)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[#111720]/92 text-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-white/10"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="absolute left-1/2 top-1/2 z-10 h-[520px] w-[min(1240px,calc(100%-18rem))] -translate-x-1/2 -translate-y-1/2">
+              <div
+                className="absolute inset-0 origin-center transition-transform duration-300"
+                style={{ transform: `scale(${zoomLevel})` }}
+              >
+                <svg
+                  viewBox="0 0 1400 700"
+                  className="absolute inset-0 h-full w-full"
+                  aria-hidden="true"
+                >
+                  <defs>
+                    <radialGradient id="ops-map-glow" cx="50%" cy="40%" r="70%">
+                      <stop offset="0%" stopColor="#1A2330" />
+                      <stop offset="70%" stopColor="#0E131A" />
+                      <stop offset="100%" stopColor="#0B0F14" />
+                    </radialGradient>
+                    <linearGradient id="ops-land" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#59606C" />
+                      <stop offset="100%" stopColor="#434A56" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="1400" height="700" fill="url(#ops-map-glow)" />
+                  <g opacity="0.16" stroke="rgba(255,255,255,0.16)" strokeWidth="1">
+                    <path d="M0 118H1400" />
+                    <path d="M0 246H1400" />
+                    <path d="M0 374H1400" />
+                    <path d="M0 502H1400" />
+                    <path d="M180 0V700" />
+                    <path d="M420 0V700" />
+                    <path d="M720 0V700" />
+                    <path d="M1000 0V700" />
+                  </g>
+                  <g fill="url(#ops-land)" stroke="#2A313D" strokeWidth="1.25">
+                    <path d="M118 214L172 176L254 184L326 216L318 276L258 302L178 295L130 262L118 214Z" />
+                    <path d="M205 332L271 346L307 394L295 466L244 540L210 505L198 444L200 385L205 332Z" />
+                    <path d="M496 150L565 136L643 152L672 197L647 235L589 228L534 200L496 150Z" />
+                    <path d="M541 250L620 255L678 294L692 353L659 416L601 431L555 390L537 324L541 250Z" />
+                    <path d="M760 164L868 144L990 167L1080 214L1068 275L1007 303L915 292L828 261L760 164Z" />
+                    <path d="M818 316L947 320L1090 356L1158 420L1118 488L1005 502L885 465L815 403L818 316Z" />
+                    <path d="M1165 432L1240 438L1278 476L1268 523L1210 530L1172 495L1165 432Z" />
+                  </g>
+                  <g opacity="0.2" fill="none" stroke="rgba(255,255,255,0.14)">
+                    <path d="M220 248C324 214 446 206 578 220" />
+                    <path d="M270 367C386 340 523 336 682 352" />
+                    <path d="M620 208C744 183 890 182 1058 208" />
+                    <path d="M603 365C738 343 892 345 1062 372" />
+                  </g>
+                </svg>
+
+                {worldRegionStats.map((region) => {
+                  const active = region.count > 0;
+                  const statusKey = active ? region.topStatusKey : "new";
+                  const statusColor = active ? mapStatusStyles[statusKey]?.color : "#64748B";
+                  const statusTint = active ? mapStatusStyles[statusKey]?.tint : "rgba(100,116,139,0.18)";
+                  const selected = hoveredRegion === region.code || activeRegionCode === region.code;
+
+                  return (
+                    <button
+                      key={region.code}
+                      type="button"
+                      onMouseEnter={() => setHoveredRegion(region.code)}
+                      onMouseLeave={() => setHoveredRegion(null)}
+                      onFocus={() => setHoveredRegion(region.code)}
+                      onBlur={() => setHoveredRegion(null)}
+                      onClick={() => setHoveredRegion(region.code)}
+                      className="group absolute z-20 -translate-x-1/2 -translate-y-1/2 outline-none"
+                      style={{ top: region.top, left: region.left }}
+                    >
+                      <span
+                        className={[
+                          "flex items-center gap-2 rounded-full border px-2 py-1 shadow-[0_12px_24px_rgba(0,0,0,0.3)] transition duration-200",
+                          selected ? "-translate-y-0.5 scale-[1.04]" : "",
+                        ].join(" ")}
+                        style={{
+                          borderColor: selected ? "rgba(255,255,255,0.24)" : "rgba(255,255,255,0.10)",
+                          background: "rgba(12,16,22,0.88)",
+                          boxShadow: selected
+                            ? `0 0 0 1px rgba(255,255,255,0.05), 0 0 22px ${statusColor}40`
+                            : "0 0 0 1px rgba(255,255,255,0.04)",
+                        }}
+                      >
+                        <span
+                          className="h-3.5 w-3.5 rounded-full"
+                          style={{
+                            background: statusColor,
+                            boxShadow: `0 0 0 5px ${statusTint}`,
+                          }}
+                        />
+                        <span className="min-w-8 rounded-full border border-white/10 bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white/90">
+                          {region.count}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+            </div>
+
+            <div className="absolute bottom-4 left-4 z-30 rounded-[22px] border border-white/8 bg-[#111720]/92 px-4 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                  {pick({ zh: "Summary", en: "Summary" })}
+                </span>
                 {[
-                  { label: "Creators", value: totalCreators },
-                  { label: "Samples", value: samplesSentCount },
-                  { label: "Markets", value: globalReach },
+                  { label: pick({ zh: "Creators", en: "Creators" }), value: totalFilteredCreators },
+                  { label: pick({ zh: "Samples", en: "Samples" }), value: filteredSamplesSentCount },
+                  { label: pick({ zh: "Markets", en: "Markets" }), value: filteredMarketCount },
+                  { label: pick({ zh: "Posted", en: "Posted" }), value: filteredPostedCount },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#6B7280]">{item.label}</span>
-                    <span className="text-sm font-semibold text-[#111827]">{item.value}</span>
+                    <span className="text-xs text-white/45">{item.label}</span>
+                    <span className="text-sm font-semibold text-white">{item.value}</span>
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/8 bg-[#111720]/92 px-3 py-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+              {Object.values(mapStatusStyles).map((config) => (
+                <span
+                  key={config.label}
+                  className="flex items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium text-white/78"
+                >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: config.color }} />
+                  {config.label}
+                </span>
+              ))}
             </div>
           </div>
         </AppCard>
@@ -502,4 +765,32 @@ export function HomePage() {
 
     </PageShell>
   );
+}
+
+function normalizeText(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function matchText(value: string, filter: string) {
+  if (filter === "All") return true;
+  return normalizeText(value).includes(normalizeText(filter));
+}
+
+function matchesStatusFilter(status: string, filter: string) {
+  if (filter === "All") return true;
+  const normalized = status.trim().toLowerCase();
+  switch (filter) {
+    case "New":
+      return normalized === "new";
+    case "Contacted":
+      return normalized === "contacted";
+    case "Replied":
+      return normalized === "replied";
+    case "Sample Sent":
+      return normalized === "sample_sent";
+    case "Posted":
+      return normalized === "posted";
+    default:
+      return true;
+  }
 }
